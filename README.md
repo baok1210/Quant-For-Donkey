@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/GUI-Streamlit-red)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Version](https://img.shields.io/badge/Version-3.0.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-4.0.0-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen)
 
 ---
@@ -266,8 +266,26 @@ solana-dca-ai-learner/
 
 ## 📊 Lịch sử phát triển
 
+### v4.0.0 (2026-04-13) - Professional Edition: Funding Rate, Liquidations, Session Risk
+**🆕 Tính năng mới (Professional Trader Features):**
+- ✅ **Crypto Data Aggregator**: Funding Rate, Open Interest, Long/Short Ratio, Liquidations
+- ✅ **Advanced DCA Timing**: Tối ưu hóa thời điểm DCA dựa trên Funding Cycles, Liquidation Zones, Weekend Effect
+- ✅ **Session Risk Management**: Daily/Weekly loss limits, Max consecutive losses, Cooldown periods
+- ✅ **Realistic Backtest Engine**: Slippage modeling, Spread simulation, Partial fill, Walk-forward validation
+- ✅ **Strategy Ensemble Voting**: Kết hợp 6 chiến lược với hệ thống voting
+- ✅ **Correlation Analysis**: BTC/SOL correlation tracking
+- ✅ **Order Flow Analysis**: Absorption patterns, Delta calculation (mock)
+
+**🔧 Cải tiến:**
+- ✅ Tích hợp Binance Futures API cho Funding Rate real-time
+- ✅ Thêm Liquidation Zone Detection
+- ✅ Thêm Weekend Effect (giảm 30% volume cuối tuần)
+- ✅ Thêm Cooldown mechanism sau chuỗi lỗ liên tiếp
+- ✅ Cập nhật main.py với luồng phân tích chuyên nghiệp
+
+**📦 35+ Modules hoàn chỉnh**
+
 ### v3.0.0 (2026-04-13) - 6 Proven Trading Strategies + Real-time Price
-**🆕 Tính năng mới:**
 - ✅ **6 Proven Trading Strategies**: EMA 9/21, ATR Breakout, Bollinger Squeeze, Grid Trading, Regime Adaptive, Multi-Strategy Ensemble
 - ✅ **Real-time Price Streaming**: CoinGecko (free), Binance WebSocket (millisecond), DIA (3000+ tokens, free)
 - ✅ **Market Data Manager**: Tổng hợp giá + on-chain + sentiment + macro
@@ -277,17 +295,6 @@ solana-dca-ai-learner/
 - ✅ **Unit Tests**: Kelly Criterion, RSI, MACD, Signal Engine
 - ✅ **Stop-Loss & Trailing Stop**: Bảo vệ vốn tự động
 - ✅ **Circuit Breakers**: Daily loss 5%, Max drawdown 20%
-- ✅ **Performance Targets**: Sharpe > 1.5, PF > 1.5, Win Rate > 40%, Max DD < 20%
-
-**🔧 Cải tiến:**
-- ✅ Sửa MACD calculation (dùng pandas.ewm chuẩn)
-- ✅ Sửa RSI calculation (Wilder's Smoothing)
-- ✅ Sửa Kelly Criterion formula (`f* = W - (1-W)/R`)
-- ✅ Thêm .gitignore cho config_settings.json
-- ✅ Cập nhật Dashboard với real-time price display
-- ✅ Cập nhật .env.example với đầy đủ API sources
-
-**📦 30+ Modules hoàn chỉnh**
 
 ### v2.0.0 (2026-04-13) - TradingView Integration
 - ✅ Tích hợp TradingView: Auto-discovery, Pine Script converter

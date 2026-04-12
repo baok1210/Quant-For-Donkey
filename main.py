@@ -1,20 +1,28 @@
 """
-Main Entry Point - Solana Quant Fund AI
-Tích hợp tất cả các components: Reflection Engine, Multi-Agent System, Risk Engine, Signal Engine
+Main Entry Point - Solana Quant Fund AI v4.0.0 (Professional Edition)
+Tích hợp: Advanced DCA, Real-time Data, Risk Management, Strategies Ensemble
 """
 
 import json
 from datetime import datetime
 import os
+import sys
+
 from engine.reflection import ReflectionEngine
 from engine.agents import MultiAgentSystem
 from engine.risk import RiskEngine
 from engine.signals import SignalEngine
 from engine.monthly_planner import MonthlyPlanner
 from engine.ai_brain import AIBrain
+from engine.data_aggregator import CryptoDataAggregator
+from engine.advanced_dca import AdvancedDCA
+from engine.session_risk import SessionRiskManager
+from engine.market_data_manager import MarketDataManager
+from engine.strategies.multi_strategy import MultiStrategyEnsemble
+from engine.offline_learner import OfflineLearner
 
 class SolanaQuantFund:
-    """Hệ thống quản lý quỹ đầu tư Solana"""
+    """Hệ thống quản lý quỹ đầu tư Solana - Phiên bản Chuyên nghiệp"""
     
     def __init__(self, initial_capital: float = 10000, ai_provider=None, ai_model=None):
         # Ưu tiên load từ file cấu hình của người dùng lưu từ GUI
@@ -26,7 +34,7 @@ class SolanaQuantFund:
         # Merge các tham số
         provider = ai_provider or user_config.get("AI_PROVIDER", "openai")
         model = ai_model or user_config.get("AI_MODEL", "gpt-4-turbo")
-        capital = initial_capital or user_config.get("INITIAL_CAPITAL", 10000)
+        self.capital = initial_capital or user_config.get("INITIAL_CAPITAL", 10000)
         
         # Load API keys vào environment nếu có từ config
         if user_config.get("OPENAI_API_KEY"):
@@ -34,219 +42,162 @@ class SolanaQuantFund:
         if user_config.get("GEMINI_API_KEY"):
             os.environ["GEMINI_API_KEY"] = user_config["GEMINI_API_KEY"]
 
+        # Core Engines
         self.reflection = ReflectionEngine()
-        self.agents = MultiAgentSystem()
-        self.risk = RiskEngine(capital)
-        self.signals = SignalEngine()
-        self.monthly_planner = MonthlyPlanner()
+        self.offline_learner = OfflineLearner()
         self.ai_brain = AIBrain(provider=provider, model=model)
         
-        self.capital = capital
+        # Professional Modules (v4.0.0)
+        self.data_aggregator = CryptoDataAggregator()
+        self.advanced_dca = AdvancedDCA()
+        self.session_risk = SessionRiskManager()
+        self.strategy_ensemble = MultiStrategyEnsemble()
+        
+        # Legacy/Support Modules
+        self.agents = MultiAgentSystem()
+        self.risk = RiskEngine(self.capital)
+        self.signals = SignalEngine()
+        self.monthly_planner = MonthlyPlanner()
+        
         self.dca_history = []
         self.performance_log = []
         
-    def run_daily_analysis(self, market_data: dict) -> dict:
+        # Tự động tối ưu trọng số lúc khởi động
+        self.offline_learner.analyze_diary()
+        
+    def run_daily_analysis(self, df_history=None) -> dict:
         """
-        Chạy phân tích hàng ngày
+        Chạy phân tích hàng ngày dựa trên dữ liệu thời gian thực
         
         Args:
-            market_data: Dữ liệu thị trường
-        
-        Returns:
-            Quyết định DCA cho ngày hôm nay
+            df_history: DataFrame chứa lịch sử OHLCV để test strategies
         """
         print("\n" + "="*60)
-        print(f"🔍 PHÂN TÍCH HÀNG NGÀY - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"🔍 PHÂN TÍCH CHUYÊN NGHIỆP - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60)
         
-        # Bước 1: Tạo tín hiệu
-        print("\n📊 Bước 1: Tạo tín hiệu kỹ thuật & on-chain")
-        signal = self.signals.generate_signal(market_data)
-        print(f"   Signal: {signal['signal_type']} (Confidence: {signal['confidence']:.2%})")
-        print(f"   RSI: {signal['rsi']:.2f} | MACD: {signal['macd_trend']}")
+        # 1. Thu thập dữ liệu "Edge"
+        print("\n📊 Bước 1: Thu thập Professional Data Edge")
+        funding = self.data_aggregator.get_funding_rate("SOLUSDT")
+        oi = self.data_aggregator.get_open_interest("SOLUSDT")
+        liquidations = self.data_aggregator.get_liquidations("SOL")
         
-        # Bước 2: Phân tích đa tác vụ
-        print("\n🤖 Bước 2: Phân tích từ Multi-Agent System")
-        agent_analysis = self.agents.run_analysis(market_data)
+        print(f"   Funding Rate: {funding['funding_rate_pct']:.4f}% ({funding['sentiment']})")
+        print(f"   Long/Short Ratio: {oi['long_short_ratio']:.2f}")
+        print(f"   Liquidations (24h): ${liquidations['liquidations_24h']:,.0f}")
         
-        bull_view = agent_analysis["bull_view"]
-        bear_view = agent_analysis["bear_view"]
-        final_decision = agent_analysis["final_decision"]
+        # 2. Phân tích Chiến lược (Ensemble)
+        print("\n🧠 Bước 2: Phân tích Chiến lược (Multi-Strategy Ensemble)")
+        if df_history is not None and not df_history.empty:
+            ensemble_result = self.strategy_ensemble.generate_ensemble_signal(df_history)
+            strategy_signal = ensemble_result['final_signal']
+            print(f"   Ensemble Signal: {strategy_signal} (Confidence: {ensemble_result['confidence']:.2f})")
+            print(f"   Votes: {ensemble_result['votes']}")
+        else:
+            strategy_signal = "HOLD"
+            print("   Không có dữ liệu lịch sử cho chiến lược (HOLD)")
         
-        print(f"   🐂 Bull Agent: {bull_view['stance']} (Confidence: {bull_view['confidence']:.2%})")
-        for signal_item in bull_view['signals'][:2]:
-            print(f"      ✓ {signal_item}")
-            
-        print(f"   🐻 Bear Agent: {bear_view['stance']} (Risk: {bear_view['risk_score']:.2%})")
-        for warning in bear_view['warnings'][:2]:
-            print(f"      ⚠ {warning}")
-            
-        print(f"   ⚖️  Arbiter Decision: {final_decision['decision']} (Score: {final_decision['net_score']:.2f})")
-        
-        # Bước 3: Quản trị rủi ro
-        print("\n⚠️  Bước 3: Quản trị rủi ro")
-        
-        # Lấy lịch sử lợi nhuận (mock data)
-        returns = market_data.get("historical_returns", [-0.05, 0.03, 0.02, -0.02, 0.04])
-        var = self.risk.calculate_var(returns)
-        print(f"   Value at Risk (95%): {var:.2%}")
-        
-        # Tính Kelly Criterion
-        win_rate = market_data.get("win_rate", 0.55)
-        avg_win = market_data.get("avg_win", 0.15)
-        avg_loss = market_data.get("avg_loss", 0.10)
-        kelly = self.risk.kelly_criterion(win_rate, avg_win, avg_loss)
-        print(f"   Kelly Fraction: {kelly:.2%}")
-        
-        # Tính position size
-        volatility = market_data.get("volatility", 0.3)
-        position_size = self.risk.calculate_position_size(win_rate, avg_win, avg_loss, volatility)
-        print(f"   Position Size: ${position_size:.2f}")
-        
-        # Bước 4: Quyết định DCA
-        print("\n💰 Bước 4: Quyết định DCA")
-        
-        base_dca = 100  # $100 mỗi ngày
-        market_condition = "bull" if signal['score'] > 0 else "bear"
-        adaptive_dca = self.risk.adaptive_dca_amount(base_dca, market_condition, volatility)
-        
-        print(f"   Base DCA: ${base_dca:.2f}")
-        print(f"   Market Condition: {market_condition.upper()}")
-        print(f"   Adaptive DCA: ${adaptive_dca:.2f}")
-        
-        # Bước 5: Ghi nhận quyết định
-        print("\n📝 Bước 5: Ghi nhận quyết định vào nhật ký")
-        
-        decision_summary = f"{final_decision['decision']} - {signal['signal_type']}"
-        reason = f"Bull: {bull_view['recommendation']}, Bear: {bear_view['recommendation']}"
-        
-        self.reflection.log_decision(
-            decision=decision_summary,
-            reason=reason,
-            amount=f"${adaptive_dca:.2f}",
-            risk_assessment=f"VaR: {var:.2%}, Drawdown: {self.risk.max_drawdown:.2%}",
-            data_sources="RSI, MACD, On-chain, Whale movements"
+        # 3. Phân tích Timing DCA chuyên nghiệp
+        print("\n⏱️  Bước 3: Advanced DCA Timing")
+        current_price = df_history['close'].iloc[-1] if df_history is not None else 150.0
+        dca_timing = self.advanced_dca.calculate_optimal_dca_time(
+            current_price=current_price,
+            btc_price=65000,  # Mock BTC price
+            sol_price=current_price
         )
-        print("   ✓ Quyết định đã được ghi lại")
         
-        # Bước 6: Phân tích kế hoạch tháng
-        print("\n📅 Bước 6: Phân tích kế hoạch DCA tháng")
-        monthly_plan = self.monthly_planner.find_entry_window(None, signal)
-        print(f"   Kế hoạch tháng: {monthly_plan['recommendation']}")
-        print(f"   Độ tin cậy: {monthly_plan['confidence']:.2%}")
-        print(f"   Lý do: {monthly_plan['reason']}")
+        should_dca = dca_timing['should_dca']
+        recommended_amount = dca_timing['recommended_amount']
         
-        # Bước 7: Gọi AI thật sự phân tích (Online Learning)
-        print("\n🧠 Bước 7: Phân tích từ AI Brain (GPT-4 / Gemini)")
+        print(f"   Quyết định DCA: {'✅ YES' if should_dca else '⏳ DELAY'}")
+        print(f"   Timing Score: {dca_timing['timing_score']:.2f}")
+        for reason in dca_timing['reasons']:
+            print(f"      ✓ {reason}")
+            
+        # 4. Quản lý Rủi ro Phiên giao dịch (Session Risk)
+        print("\n🛡️  Bước 4: Session Risk Management")
+        risk_check = self.session_risk.check_risk(self.capital)
         
-        # Đọc nội dung nhật ký đầu tư để cung cấp ngữ cảnh
+        if risk_check["action"] == "BLOCK":
+            print(f"   🛑 Giao dịch bị khóa: {risk_check['reason']}")
+            should_dca = False
+            recommended_amount = 0
+        else:
+            print("   ✅ Vượt qua kiểm tra rủi ro")
+            
+        # Tính toán Position Size an toàn (Kelly)
+        if should_dca:
+            kelly_size = self.risk.calculate_kelly_size(win_rate=0.45, avg_win=0.15, avg_loss=0.08)
+            max_allowed = self.capital * kelly_size
+            final_amount = min(recommended_amount, max_allowed)
+            print(f"   Khối lượng an toàn (Half-Kelly): ${final_amount:.2f}")
+        else:
+            final_amount = 0
+            
+        # 5. Phân tích từ AI Brain (Online Learning)
+        print("\n🤖 Bước 5: Tham vấn AI Brain")
+        
         diary_content = ""
         if os.path.exists("memory/INVESTMENT_DIARY.md"):
             with open("memory/INVESTMENT_DIARY.md", "r", encoding="utf-8") as f:
                 diary_content = f.read()
         
-        # Gửi dữ liệu thị trường cho AI
         ai_analysis = self.ai_brain.analyze_market({
-            "price": market_data.get("prices", [])[-1] if market_data.get("prices") else "N/A",
-            "rsi": signal.get("rsi", "N/A"),
-            "macd": signal.get("macd_trend", "N/A"),
-            "volume_change": signal.get("onchain_metrics", {}).get("tx_volume_change", "N/A"),
-            "active_wallets_change": signal.get("onchain_metrics", {}).get("active_wallets_change", "N/A"),
-            "whale_outflow": signal.get("onchain_metrics", {}).get("whale_movements", "N/A"),
-            "priority_fee": signal.get("onchain_metrics", {}).get("network_health", "N/A")
+            "price": current_price,
+            "funding_rate": funding['funding_rate_pct'],
+            "long_short_ratio": oi['long_short_ratio'],
+            "strategy_signal": strategy_signal,
+            "dca_timing_score": dca_timing['timing_score']
         }, diary_content)
         
         print(f"   Khuyến nghị AI: {ai_analysis.get('recommendation', 'N/A')}")
-        print(f"   Độ tin cậy AI: {ai_analysis.get('confidence', 'N/A')}")
         print(f"   Lý do: {ai_analysis.get('reasoning', 'N/A')}")
         
-        # Nếu AI khuyến nghị "STRONG_BUY" và độ tin cậy > 0.8, giải ngân toàn bộ vốn tháng
-        if ai_analysis.get('recommendation') == "STRONG_BUY" and ai_analysis.get('confidence', 0) > 0.8:
-            total_monthly_budget = 3000  # Giả sử ngân sách 1 tháng là $3000
-            adaptive_dca = total_monthly_budget  # Giải ngân 1 lần duy nhất
-            print(f"   💰 GIẢI NGÂN TOÀN BỘ THEO AI: ${adaptive_dca:.2f}")
-        
-        # Tổng hợp kết quả
-        result = {
-            "timestamp": datetime.now().isoformat(),
-            "signal": signal,
-            "agent_analysis": final_decision,
-            "dca_amount": adaptive_dca,
-            "decision": final_decision['decision'],
-            "monthly_plan": monthly_plan,
-            "ai_analysis": ai_analysis,
-            "risk_metrics": self.risk.get_risk_metrics()
-        }
-        
-        return result
-    
-    def evaluate_performance(self, actual_price_change: float, dca_amount: float):
-        """
-        Đánh giá hiệu suất của quyết định DCA
-        
-        Args:
-            actual_price_change: Thay đổi giá thực tế (%)
-            dca_amount: Số tiền DCA
-        """
-        pnl = dca_amount * actual_price_change
-        
-        self.performance_log.append({
-            "timestamp": datetime.now().isoformat(),
-            "dca_amount": dca_amount,
-            "price_change": actual_price_change,
-            "pnl": pnl
-        })
-        
-        # Cập nhật vốn
-        self.capital += pnl
-        self.risk.capital = self.capital
-        
-        # Cập nhật drawdown
-        drawdown = self.risk.update_drawdown(self.capital)
-        
-        print(f"\n📈 Đánh giá hiệu suất:")
-        print(f"   Giá thay đổi: {actual_price_change:.2%}")
-        print(f"   P&L: ${pnl:.2f}")
-        print(f"   Vốn hiện tại: ${self.capital:.2f}")
-        print(f"   Drawdown: {drawdown:.2%}")
-        
-        # Nếu drawdown quá cao, ghi nhận bài học
-        if drawdown > 0.1:
-            self.reflection._add_lesson(
-                f"Drawdown {drawdown:.2%} - Cần điều chỉnh chiến lược",
-                "Tăng tỷ lệ cash, giảm position size"
+        # 6. Ghi nhận nhật ký
+        if final_amount > 0:
+            print("\n📝 Bước 6: Ghi nhận quyết định")
+            self.reflection.log_decision(
+                decision=f"DCA {strategy_signal}",
+                reason=f"AI: {ai_analysis.get('recommendation')} | Timing: {dca_timing['timing_score']:.2f}",
+                amount=f"${final_amount:.2f}",
+                risk_assessment=f"Passed Session Risk, Kelly Size: {kelly_size:.2%}",
+                data_sources="Funding Rate, L/S Ratio, XGBoost, 6 Strategies"
             )
+            print("   ✓ Quyết định đã được lưu")
+            
+            # Update session risk
+            self.session_risk.record_trade_result(0)  # Ghi nhận trade mới
+            
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "funding_data": funding,
+            "oi_data": oi,
+            "strategy_signal": strategy_signal,
+            "dca_timing": dca_timing,
+            "final_amount": final_amount,
+            "ai_analysis": ai_analysis
+        }
 
 # Test
 if __name__ == "__main__":
+    import pandas as pd
+    import numpy as np
+    
+    # Tạo mock data để test
+    print("Khởi tạo hệ thống Quant Fund...")
     fund = SolanaQuantFund(initial_capital=10000)
     
-    # Mock market data
-    test_market_data = {
-        "timestamp": datetime.now().isoformat(),
-        "prices": [100, 102, 101, 103, 105, 104, 106, 108, 107, 109, 110, 108, 105, 102, 98, 95, 92, 90, 88, 85],
-        "rsi": 28,
-        "volume_change": 0.25,
-        "active_wallets": {"prev": 100000, "current": 115000},
-        "tx_volume": {"prev": 1000000, "current": 1200000},
-        "whale_transfers": {"outflow": 500},
-        "priority_fee": 0.0003,
-        "volatility": 0.3,
-        "win_rate": 0.55,
-        "avg_win": 0.15,
-        "avg_loss": 0.10,
-        "historical_returns": [-0.05, 0.03, 0.02, -0.02, 0.04]
-    }
+    # Generate 100 days of mock data
+    dates = pd.date_range(end=datetime.now(), periods=100, freq='D')
+    prices = 150 * np.exp(np.cumsum(np.random.normal(0.001, 0.02, 100)))
+    df = pd.DataFrame({
+        'date': dates,
+        'open': prices,
+        'high': prices * 1.02,
+        'low': prices * 0.98,
+        'close': prices,
+        'volume': np.random.randint(1000, 10000, 100)
+    }).set_index('date')
     
     # Chạy phân tích
-    result = fund.run_daily_analysis(test_market_data)
-    
-    print("\n" + "="*60)
-    print("📊 KẾT QUẢ PHÂN TÍCH")
-    print("="*60)
-    print(json.dumps({
-        "decision": result["decision"],
-        "dca_amount": result["dca_amount"],
-        "signal": result["signal"]["signal_type"],
-        "confidence": result["signal"]["confidence"]
-    }, indent=2, ensure_ascii=False))
+    result = fund.run_daily_analysis(df)
