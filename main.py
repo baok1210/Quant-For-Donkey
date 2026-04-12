@@ -16,13 +16,13 @@ from engine.ai_brain import AIBrain
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana"""
     
-    def __init__(self, initial_capital: float = 10000, ai_provider="openai"):
+    def __init__(self, initial_capital: float = 10000, ai_provider="openai", ai_model="gpt-4-turbo"):
         self.reflection = ReflectionEngine()
         self.agents = MultiAgentSystem()
         self.risk = RiskEngine(initial_capital)
         self.signals = SignalEngine()
         self.monthly_planner = MonthlyPlanner()  # Thêm monthly planner
-        self.ai_brain = AIBrain(provider=ai_provider)  # Thêm AI thật sự
+        self.ai_brain = AIBrain(provider=ai_provider, model=ai_model)  # Thêm AI thật sự
         
         self.capital = initial_capital
         self.dca_history = []

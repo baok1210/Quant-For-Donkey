@@ -10,15 +10,22 @@ class AIBrain:
     để phân tích dữ liệu thị trường và đưa ra quyết định DCA
     """
     
-    def __init__(self, provider="openai", api_key=None):
+    # Danh sách model có sẵn
+    AVAILABLE_MODELS = {
+        "openai": ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
+        "gemini": ["gemini-pro", "gemini-flash"]
+    }
+    
+    def __init__(self, provider="openai", model="gpt-4-turbo", api_key=None):
         self.provider = provider
+        self.model = model
         self.api_key = api_key or os.getenv(f"{provider.upper()}_API_KEY")
         
         if provider == "openai":
             openai.api_key = self.api_key
         elif provider == "gemini":
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model_instance = genai.GenerativeModel(model)
     
     def analyze_market(self, market_data: dict, investment_diary: str = ""):
         """
@@ -64,7 +71,7 @@ class AIBrain:
         """
         
         response = openai.ChatCompletion.create(
-            model="gpt-4-turbo",
+            model=self.model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             max_tokens=1000
@@ -109,7 +116,7 @@ class AIBrain:
         }}
         """
         
-        response = self.model.generate_content(prompt)
+        response = self.model_instance.generate_content(prompt)
         
         try:
             # Trích xuất JSON từ response
