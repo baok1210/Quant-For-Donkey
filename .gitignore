@@ -13,8 +13,9 @@ dist/
 *.egg-info/
 *.egg
 
-# Config
+# Config - CRITICAL: Never commit these files!
 config.py
+config_settings.json
 .env
 *.local
 
@@ -28,6 +29,7 @@ backtests/*
 memory/INVESTMENT_DIARY.md
 memory/LESSONS_LEARNED.md
 memory/MODEL_VERSIONS.md
+memory/offline_model.json
 
 # IDE
 .vscode/
