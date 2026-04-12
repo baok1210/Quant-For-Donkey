@@ -20,6 +20,8 @@ from engine.session_risk import SessionRiskManager
 from engine.market_data_manager import MarketDataManager
 from engine.strategies.multi_strategy import MultiStrategyEnsemble
 from engine.offline_learner import OfflineLearner
+from engine.deliberation import DeliberationLayer
+from engine.backtest_walkforward import WalkForwardBacktester
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana - Phiên bản Chuyên nghiệp"""

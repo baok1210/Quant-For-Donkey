@@ -57,15 +57,68 @@ class CryptoDataAggregator:
         except:
             return {"open_interest": 0, "long_short_ratio": 1.0}
 
-    def get_liquidations(self, symbol: str = "SOL") -> Dict:
-        """Mô phỏng/Lấy dữ liệu Liquidation (Thường dùng Coinglass API)"""
-        # Đây là mock data dựa trên Open Interest và Volatility nếu không có Coinglass Key
+    def get_liquidations(self, symbol: str = "SOLUSDT") -> Dict:
+        """Lấy dữ liệu Liquidation từ Binance API (Free Tier)"""
+        try:
+            # Lấy liquidation data từ Binance
+            url = f"{self.binance_data_api}/liquidationOrders"
+            params = {
+                "symbol": symbol,
+                "limit": 500  # Lấy 500 lệnh gần nhất
+            }
+            
+            resp = requests.get(url, params=params, timeout=5).json()
+            
+            if resp:
+                total_liq = sum(float(item['origQty']) * float(item['price']) for item in resp)
+                
+                # Phân loại long vs short
+                long_liq = sum(float(item['origQty']) * float(item['price']) 
+                              for item in resp if item['side'] == 'BUY')
+                short_liq = total_liq - long_liq
+                
+                return {
+                    "symbol": symbol,
+                    "liquidations_24h": total_liq,
+                    "long_liquidations": long_liq,
+                    "short_liquidations": short_liq,
+                    "long_short_liq_ratio": long_liq / short_liq if short_liq > 0 else float('inf'),
+                    "timestamp": datetime.now().isoformat()
+                }
+        except:
+            pass
+        
+        # Fallback: mock data
         return {
             "symbol": symbol,
-            "liquidations_24h": 1500000, # $1.5M
-            "long_short_liq_ratio": 1.2, # More longs liquidated
-            "major_liq_zones": [145.5, 142.0, 155.2]
+            "liquidations_24h": 1500000, 
+            "long_liquidations": 900000,
+            "short_liquidations": 600000,
+            "long_short_liq_ratio": 1.5
         }
+
+    def get_funding_history(self, symbol: str = "SOLUSDT", limit: int = 100) -> List[Dict]:
+        """Lấy lịch sử funding rate (cho phân tích chu kỳ)"""
+        try:
+            url = f"{self.binance_data_api}/fundingRate"
+            params = {
+                "symbol": symbol,
+                "limit": limit
+            }
+            
+            resp = requests.get(url, params=params, timeout=5).json()
+            
+            funding_history = []
+            for item in resp:
+                funding_history.append({
+                    "funding_rate": float(item["fundingRate"]),
+                    "timestamp": datetime.fromtimestamp(int(item["fundingTime"]) / 1000).isoformat(),
+                    "mark_price": float(item["markPrice"])
+                })
+            
+            return funding_history
+        except:
+            return []
 
     def calculate_correlation(self, btc_prices: List[float], sol_prices: List[float]) -> Dict:
         """Tính tương quan BTC vs SOL (Rolling Correlation)"""
@@ -77,4 +130,28 @@ class CryptoDataAggregator:
         return {
             "correlation": corr,
             "interpretation": "STRONG" if corr > 0.8 else ("MODERATE" if corr > 0.5 else "WEAK")
+        }
+
+    def detect_funding_cycles(self, symbol: str = "SOLUSDT") -> Dict:
+        """Phát hiện chu kỳ funding rate (8h cycle)"""
+        history = self.get_funding_history(symbol, limit=50)
+        
+        if len(history) < 10:
+            return {"cycle_detected": False, "pattern": "INSUFFICIENT_DATA"}
+        
+        # Tính chu kỳ: funding rate thường oscillate giữa + và -
+        positive_count = sum(1 for h in history if h["funding_rate"] > 0)
+        negative_count = len(history) - positive_count
+        
+        # Tính trung bình và độ lệch
+        avg_funding = np.mean([h["funding_rate"] for h in history])
+        std_funding = np.std([h["funding_rate"] for h in history])
+        
+        return {
+            "cycle_detected": abs(avg_funding) < std_funding * 0.5,  # Nếu trung bình gần 0 -> có chu kỳ
+            "avg_funding_rate": avg_funding,
+            "std_funding_rate": std_funding,
+            "positive_ratio": positive_count / len(history),
+            "negative_ratio": negative_count / len(history),
+            "pattern": "CYCLICAL" if abs(avg_funding) < std_funding * 0.5 else "BIASED"
         }
