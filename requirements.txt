@@ -17,3 +17,4 @@ yfinance>=0.2.36
 xgboost>=2.0.3
 websockets>=12.0
 aiohttp>=3.9.0
+ta-lib>=0.4.28
