@@ -27,6 +27,23 @@ st.markdown("""
 *Hệ thống đầu tư định lượng trên Solana với khả năng tự học*
 """)
 
+# --- Real-time Price Display ---
+from engine.price_stream import PriceAggregator
+price_agg = PriceAggregator()
+price_data = price_agg.get_solana_market_overview()
+
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.metric("SOL/USD (Avg)", f"${price_data['summary']['sol_price_avg']:.2f}")
+with col2:
+    change_24h = price_data['summary']['price_change_24h']
+    st.metric("24h Change", f"{change_24h:.2f}%", 
+              delta=f"{change_24h:.2f}%" if change_24h >= 0 else f"{change_24h:.2f}%")
+with col3:
+    st.metric("High 24h", f"${price_data['summary']['high_24h']:.2f}")
+with col4:
+    st.metric("Low 24h", f"${price_data['summary']['low_24h']:.2f}")
+
 # --- Sidebar ---
 st.sidebar.header("⚙️ Cài đặt")
 st.sidebar.markdown("Cấu hình hệ thống")

@@ -1,58 +1,69 @@
 """
-Historical Data - Thu thập và quản lý dữ liệu lịch sử cho AI học offline
+Historical Data Manager - Tải và quản lý dữ liệu OHLCV quy mô lớn
+Hỗ trợ tải 1-2 năm dữ liệu từ Binance/OKX cho Backtesting
 """
-import pandas as pd
 import os
+import pandas as pd
+import ccxt
 from datetime import datetime, timedelta
+import time
 
 class HistoricalDataManager:
-    """Quản lý dữ liệu lịch sử cho AI Offline Learning"""
+    """Quản lý dữ liệu lịch sử cho Backtest và Offline Learning"""
     
-    def __init__(self, data_dir="data"):
-        self.data_dir = data_dir
-        os.makedirs(data_dir, exist_ok=True)
+    def __init__(self, storage_path="data/historical"):
+        self.storage_path = storage_path
+        os.makedirs(self.storage_path, exist_ok=True)
+        self.exchange = ccxt.binance({
+            'enableRateLimit': True,
+        })
+
+    def fetch_large_dataset(self, symbol="SOL/USDT", timeframe="1h", years=1):
+        """
+        Tải dữ liệu lịch sử lớn (ví dụ 1-2 năm)
+        """
+        print(f"🚀 Bắt đầu tải {years} năm dữ liệu cho {symbol} ({timeframe})...")
         
-    def load_ohlcv(self, symbol="SOL-USDT", timeframe="1h"):
-        """Load dữ liệu OHLCV từ file CSV"""
-        filename = f"{self.data_dir}/{symbol}_{timeframe}.csv"
-        if os.path.exists(filename):
-            df = pd.read_csv(filename, parse_dates=["timestamp"])
+        since = self.exchange.parse8601((datetime.now() - timedelta(days=365*years)).isoformat())
+        all_ohlcv = []
+        
+        while since < self.exchange.milliseconds():
+            try:
+                ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, since, limit=1000)
+                if not ohlcv:
+                    break
+                    
+                since = ohlcv[-1][0] + 1
+                all_ohlcv.extend(ohlcv)
+                print(f"✅ Đã tải đến: {datetime.fromtimestamp(since/1000).strftime('%Y-%m-%d %H:%M')}")
+                
+                # Tránh bị ban IP
+                time.sleep(self.exchange.rateLimit / 1000)
+                
+            except Exception as e:
+                print(f"❌ Lỗi khi tải: {e}")
+                time.sleep(10)
+                continue
+                
+        # Convert sang DataFrame
+        df = pd.DataFrame(all_ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
+        df.set_index('datetime', inplace=True)
+        
+        # Lưu file
+        file_name = f"{symbol.replace('/', '_')}_{timeframe}_{years}y.csv"
+        file_path = os.path.join(self.storage_path, file_name)
+        df.to_csv(file_path)
+        
+        print(f"🏁 Đã lưu {len(df)} nến vào {file_path}")
+        return df
+
+    def load_local_data(self, symbol="SOL/USDT", timeframe="1h", years=1):
+        """Load dữ liệu từ file CSV cục bộ"""
+        file_name = f"{symbol.replace('/', '_')}_{timeframe}_{years}y.csv"
+        file_path = os.path.join(self.storage_path, file_name)
+        
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path, index_col='datetime', parse_dates=True)
             return df
         return None
-    
-    def save_ohlcv(self, df, symbol="SOL-USDT", timeframe="1h"):
-        """Lưu dữ liệu OHLCV vào file CSV"""
-        os.makedirs(self.data_dir, exist_ok=True)
-        filename = f"{self.data_dir}/{symbol}_{timeframe}.csv"
-        df.to_csv(filename, index=False)
-        
-    def get_latest_data(self, symbol="SOL-USDT", timeframe="1h"):
-        """Lấy dữ liệu mới nhất"""
-        df = self.load_ohlcv(symbol, timeframe)
-        if df is not None:
-            return df.tail(100)
-        return None
-    
-    def generate_sample_data(self, days=30, timeframe="1h"):
-        """Tạo dữ liệu mẫu để demo khi chưa có dữ liệu thật"""
-        dates = pd.date_range(end=datetime.now(), periods=days*24, freq="1h")
-        import numpy as np
-        
-        np.random.seed(42)
-        base_price = 100
-        prices = [base_price]
-        for i in range(1, len(dates)):
-            change = np.random.normal(0, 0.02)
-            prices.append(prices[-1] * (1 + change))
-            
-        df = pd.DataFrame({
-            "timestamp": dates,
-            "open": prices,
-            "high": [p * 1.02 for p in prices],
-            "low": [p * 0.98 for p in prices],
-            "close": prices,
-            "volume": np.random.uniform(1000000, 5000000, len(dates))
-        })
-        
-        self.save_ohlcv(df, "SOL-USDT", timeframe)
-        return df
