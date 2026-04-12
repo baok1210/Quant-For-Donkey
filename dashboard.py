@@ -113,6 +113,15 @@ from engine.monthly_planner import MonthlyPlanner
 with tab1:
     st.header("📊 Tổng quan hệ thống")
     
+    # Macro Status
+    from engine.macro import MacroAnalyzer
+    macro = MacroAnalyzer()
+    risk_env = macro.analyze_risk_on_off()
+    if risk_env == "RISK_ON":
+        st.success(f"🌍 Môi trường vĩ mô: **{risk_env}** (Thuận lợi cho đầu tư mạo hiểm)")
+    else:
+        st.warning(f"🌍 Môi trường vĩ mô: **{risk_env}** (Nên thận trọng)")
+    
     # Sniper DCA Monthly Plan
     st.info("🎯 **Kế hoạch DCA Sniper Tháng này:** Đang chờ thời điểm giá sụt giảm mạnh nhất để giải ngân.")
     

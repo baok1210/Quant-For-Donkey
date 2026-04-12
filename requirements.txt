@@ -13,3 +13,5 @@ ccxt>=4.2.0
 scipy>=1.11.0
 tweepy>=4.14.0
 praw>=7.7.1
+yfinance>=0.2.36
+xgboost>=2.0.3
