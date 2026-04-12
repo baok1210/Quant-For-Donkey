@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Config
+config.py
+.env
+*.local
+
+# Data
+data/*.csv
+data/*.json
+reports/*
+backtests/*
+
+# Memory (keep templates)
+memory/INVESTMENT_DIARY.md
+memory/LESSONS_LEARNED.md
+memory/MODEL_VERSIONS.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Dependencies
+*.lock
