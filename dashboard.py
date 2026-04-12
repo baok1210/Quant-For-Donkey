@@ -122,8 +122,11 @@ with tab1:
     else:
         st.warning(f"🌍 Môi trường vĩ mô: **{risk_env}** (Nên thận trọng)")
     
-    # Sniper DCA Monthly Plan
-    st.info("🎯 **Kế hoạch DCA Sniper Tháng này:** Đang chờ thời điểm giá sụt giảm mạnh nhất để giải ngân.")
+    # Dynamic Sniper DCA Monthly Plan from engine
+    from engine.monthly_planner import MonthlyPlanner
+    planner = MonthlyPlanner()
+    sniper_plan = planner.get_monthly_plan()
+    st.info(f"🎯 **Kế hoạch DCA Sniper Tháng này:** {sniper_plan['strategy_description']}")
     
     # Hiển thị thông tin cơ bản
     col1, col2, col3 = st.columns(3)
