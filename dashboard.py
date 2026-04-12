@@ -33,64 +33,79 @@ st.sidebar.markdown("Cấu hình hệ thống")
 
 # --- Main Content ---
 # Tạo các tab
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "⚙️ Cấu hình"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "⚙️ Cấu hình"])
 
-# --- Tab 5: Cấu hình ---
+# --- Tab 5: Offline Learning ---
 with tab5:
-    st.header("⚙️ Cấu hình hệ thống")
-    st.markdown("Quản lý API Keys và thông số vận hành của AI.")
-
-    # Phân nhóm cấu hình
-    with st.expander("🧠 Cấu hình AI Brain", expanded=True):
-        col_ai1, col_ai2 = st.columns(2)
-        with col_ai1:
-            provider = st.selectbox("Chọn AI Provider", ["openai", "gemini"], index=0)
-        with col_ai2:
-            model_list = {
-                "openai": ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
-                "gemini": ["gemini-pro", "gemini-flash"]
-            }
-            selected_model = st.selectbox("Chọn Model", model_list[provider])
+    st.header("📊 Offline Learning & Backtesting")
+    st.markdown("AI học từ dữ liệu lịch sử và chạy thử nghiệm chiến lược.")
+    
+    if st.button("🔄 Chạy Offline Learning"):
+        from engine.offline_learner import OfflineLearner
+        from engine.historical_data import HistoricalDataManager
+        from engine.backtesting_engine import BacktestingEngine
         
-        openai_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-...")
-        gemini_key = st.text_input("Gemini API Key", type="password", placeholder="AIza...")
-
-    with st.expander("🏦 Cấu hình Sàn giao dịch (Binance/OKX)", expanded=False):
-        exchange = st.selectbox("Chọn Sàn thực thi", ["Binance", "OKX"])
-        col_ex1, col_ex2 = st.columns(2)
-        with col_ex1:
-            api_key = st.text_input(f"{exchange} API Key", type="password")
-        with col_ex2:
-            api_secret = st.text_input(f"{exchange} Secret Key", type="password")
+        learner = OfflineLearner()
+        data_manager = HistoricalDataManager()
+        backtester = BacktestingEngine()
         
-        if exchange == "OKX":
-            passphrase = st.text_input("OKX Passphrase", type="password")
+        # Load dữ liệu mẫu nếu chưa có
+        data = data_manager.get_latest_data()
+        if data is None:
+            st.info("Chưa có dữ liệu, tạo dữ liệu mẫu...")
+            data = data_manager.generate_sample_data(days=30)
+        
+        # AI học từ nhật ký
+        learn_result = learner.learn_from_diary()
+        st.success(learn_result)
+        
+        # Lấy trọng số đã học
+        weights = learner.get_optimized_weights()
+        st.write("### Trọng số đã học:")
+        for key, value in weights.items():
+            st.write(f"{key}: {value:.3f}")
+        
+        # Định nghĩa chiến lược mẫu
+        def sample_strategy(df_slice, weights):
+            rsi = df_slice['rsi'].iloc[-1]
+            macd = df_slice['macd'].iloc[-1]
+            signal = df_slice['signal'].iloc[-1]
+            
+            # Dùng trọng số để kết hợp các tín hiệu
+            combined_signal = (
+                weights.get('rsi_weight', 1.0) * (1 if rsi < 30 else 0 if rsi > 70 else 0.5) +
+                weights.get('macd_weight', 1.0) * (1 if macd > signal else 0)
+            )
+            
+            if combined_signal >= 1.5:
+                return "BUY"
+            elif combined_signal <= 0.5:
+                return "SELL"
+            return "HOLD"
+        
+        # Chạy backtest
+        st.write("### Kết quả Backtest:")
+        results = backtester.run_backtest(data, sample_strategy, weights)
+        
+        col_bt1, col_bt2, col_bt3 = st.columns(3)
+        with col_bt1:
+            st.metric("Tổng lợi nhuận", f"{results['total_return']:.2%}")
+        with col_bt2:
+            st.metric("Max Drawdown", f"{results['max_drawdown']:.2%}")
+        with col_bt3:
+            st.metric("Sharpe Ratio", f"{results['sharpe_ratio']:.2f}")
+        
+        st.write(f"Số giao dịch: {results['trade_count']}")
+        
+        # Vẽ biểu đồ hiệu suất
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.plot(results['portfolio_history'])
+        ax.set_title("Lịch sử giá trị danh mục")
+        ax.set_xlabel("Thời gian")
+        ax.set_ylabel("Giá trị ($)")
+        st.pyplot(fig)
 
-    with st.expander("💰 Thông số đầu tư & Rủi ro", expanded=False):
-        col_inv1, col_inv2 = st.columns(2)
-        with col_inv1:
-            init_cap = st.number_input("Vốn khởi đầu ($)", value=1000.0)
-            dca_amt = st.number_input("Số tiền DCA cơ bản ($)", value=100.0)
-        with col_inv2:
-            max_dd = st.slider("Max Drawdown Limit (%)", 5, 50, 20)
-            kelly = st.slider("Kelly Fraction", 0.1, 1.0, 0.5)
-
-    if st.button("💾 Lưu cấu hình", type="primary"):
-        # Logic lưu vào file .env hoặc config.json
-        config_data = {
-            "AI_PROVIDER": provider,
-            "AI_MODEL": selected_model,
-            "OPENAI_API_KEY": openai_key,
-            "GEMINI_API_KEY": gemini_key,
-            "INITIAL_CAPITAL": init_cap,
-            "BASE_DCA_AMOUNT": dca_amt,
-            "MAX_DRAWDOWN": max_dd / 100,
-            "KELLY_FRACTION": kelly
-        }
-        # Lưu file config
-        with open("config_settings.json", "w") as f:
-            json.dump(config_data, f, indent=4)
-        st.success("✅ Đã lưu cấu hình thành công! Vui lòng khởi động lại hệ thống để áp dụng.")
 
 from engine.monthly_planner import MonthlyPlanner
 
