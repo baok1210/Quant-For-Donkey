@@ -33,7 +33,64 @@ st.sidebar.markdown("Cấu hình hệ thống")
 
 # --- Main Content ---
 # Tạo các tab
-tab1, tab2, tab3, tab4 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "⚙️ Cấu hình"])
+
+# --- Tab 5: Cấu hình ---
+with tab5:
+    st.header("⚙️ Cấu hình hệ thống")
+    st.markdown("Quản lý API Keys và thông số vận hành của AI.")
+
+    # Phân nhóm cấu hình
+    with st.expander("🧠 Cấu hình AI Brain", expanded=True):
+        col_ai1, col_ai2 = st.columns(2)
+        with col_ai1:
+            provider = st.selectbox("Chọn AI Provider", ["openai", "gemini"], index=0)
+        with col_ai2:
+            model_list = {
+                "openai": ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
+                "gemini": ["gemini-pro", "gemini-flash"]
+            }
+            selected_model = st.selectbox("Chọn Model", model_list[provider])
+        
+        openai_key = st.text_input("OpenAI API Key", type="password", placeholder="sk-...")
+        gemini_key = st.text_input("Gemini API Key", type="password", placeholder="AIza...")
+
+    with st.expander("🏦 Cấu hình Sàn giao dịch (Binance/OKX)", expanded=False):
+        exchange = st.selectbox("Chọn Sàn thực thi", ["Binance", "OKX"])
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            api_key = st.text_input(f"{exchange} API Key", type="password")
+        with col_ex2:
+            api_secret = st.text_input(f"{exchange} Secret Key", type="password")
+        
+        if exchange == "OKX":
+            passphrase = st.text_input("OKX Passphrase", type="password")
+
+    with st.expander("💰 Thông số đầu tư & Rủi ro", expanded=False):
+        col_inv1, col_inv2 = st.columns(2)
+        with col_inv1:
+            init_cap = st.number_input("Vốn khởi đầu ($)", value=1000.0)
+            dca_amt = st.number_input("Số tiền DCA cơ bản ($)", value=100.0)
+        with col_inv2:
+            max_dd = st.slider("Max Drawdown Limit (%)", 5, 50, 20)
+            kelly = st.slider("Kelly Fraction", 0.1, 1.0, 0.5)
+
+    if st.button("💾 Lưu cấu hình", type="primary"):
+        # Logic lưu vào file .env hoặc config.json
+        config_data = {
+            "AI_PROVIDER": provider,
+            "AI_MODEL": selected_model,
+            "OPENAI_API_KEY": openai_key,
+            "GEMINI_API_KEY": gemini_key,
+            "INITIAL_CAPITAL": init_cap,
+            "BASE_DCA_AMOUNT": dca_amt,
+            "MAX_DRAWDOWN": max_dd / 100,
+            "KELLY_FRACTION": kelly
+        }
+        # Lưu file config
+        with open("config_settings.json", "w") as f:
+            json.dump(config_data, f, indent=4)
+        st.success("✅ Đã lưu cấu hình thành công! Vui lòng khởi động lại hệ thống để áp dụng.")
 
 from engine.monthly_planner import MonthlyPlanner
 

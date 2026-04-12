@@ -16,15 +16,32 @@ from engine.ai_brain import AIBrain
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana"""
     
-    def __init__(self, initial_capital: float = 10000, ai_provider="openai", ai_model="gpt-4-turbo"):
+    def __init__(self, initial_capital: float = 10000, ai_provider=None, ai_model=None):
+        # Ưu tiên load từ file cấu hình của người dùng lưu từ GUI
+        user_config = {}
+        if os.path.exists("config_settings.json"):
+            with open("config_settings.json", "r") as f:
+                user_config = json.load(f)
+        
+        # Merge các tham số
+        provider = ai_provider or user_config.get("AI_PROVIDER", "openai")
+        model = ai_model or user_config.get("AI_MODEL", "gpt-4-turbo")
+        capital = initial_capital or user_config.get("INITIAL_CAPITAL", 10000)
+        
+        # Load API keys vào environment nếu có từ config
+        if user_config.get("OPENAI_API_KEY"):
+            os.environ["OPENAI_API_KEY"] = user_config["OPENAI_API_KEY"]
+        if user_config.get("GEMINI_API_KEY"):
+            os.environ["GEMINI_API_KEY"] = user_config["GEMINI_API_KEY"]
+
         self.reflection = ReflectionEngine()
         self.agents = MultiAgentSystem()
-        self.risk = RiskEngine(initial_capital)
+        self.risk = RiskEngine(capital)
         self.signals = SignalEngine()
-        self.monthly_planner = MonthlyPlanner()  # Thêm monthly planner
-        self.ai_brain = AIBrain(provider=ai_provider, model=ai_model)  # Thêm AI thật sự
+        self.monthly_planner = MonthlyPlanner()
+        self.ai_brain = AIBrain(provider=provider, model=model)
         
-        self.capital = initial_capital
+        self.capital = capital
         self.dca_history = []
         self.performance_log = []
         
