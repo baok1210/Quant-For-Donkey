@@ -2,6 +2,8 @@
 
 > Hệ thống đầu tư định lượng trên Solana với khả năng tự học và tự cải thiện.
 
+**Version:** v1.0.0 | **Release Date:** 2026-04-13
+
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/GUI-Streamlit-red)
 ![License](https://img.shields.io/badge/License-MIT-green)
