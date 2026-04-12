@@ -5,21 +5,24 @@ Tích hợp tất cả các components: Reflection Engine, Multi-Agent System, R
 
 import json
 from datetime import datetime
+import os
 from engine.reflection import ReflectionEngine
 from engine.agents import MultiAgentSystem
 from engine.risk import RiskEngine
 from engine.signals import SignalEngine
 from engine.monthly_planner import MonthlyPlanner
+from engine.ai_brain import AIBrain
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana"""
     
-    def __init__(self, initial_capital: float = 10000):
+    def __init__(self, initial_capital: float = 10000, ai_provider="openai"):
         self.reflection = ReflectionEngine()
         self.agents = MultiAgentSystem()
         self.risk = RiskEngine(initial_capital)
         self.signals = SignalEngine()
         self.monthly_planner = MonthlyPlanner()  # Thêm monthly planner
+        self.ai_brain = AIBrain(provider=ai_provider)  # Thêm AI thật sự
         
         self.capital = initial_capital
         self.dca_history = []
@@ -116,11 +119,35 @@ class SolanaQuantFund:
         print(f"   Độ tin cậy: {monthly_plan['confidence']:.2%}")
         print(f"   Lý do: {monthly_plan['reason']}")
         
-        # Nếu là "STRONG_ENTRY_NOW", giải ngân toàn bộ vốn tháng
-        if monthly_plan['recommendation'] == "STRONG_ENTRY_NOW":
+        # Bước 7: Gọi AI thật sự phân tích (Online Learning)
+        print("\n🧠 Bước 7: Phân tích từ AI Brain (GPT-4 / Gemini)")
+        
+        # Đọc nội dung nhật ký đầu tư để cung cấp ngữ cảnh
+        diary_content = ""
+        if os.path.exists("memory/INVESTMENT_DIARY.md"):
+            with open("memory/INVESTMENT_DIARY.md", "r", encoding="utf-8") as f:
+                diary_content = f.read()
+        
+        # Gửi dữ liệu thị trường cho AI
+        ai_analysis = self.ai_brain.analyze_market({
+            "price": market_data.get("prices", [])[-1] if market_data.get("prices") else "N/A",
+            "rsi": signal.get("rsi", "N/A"),
+            "macd": signal.get("macd_trend", "N/A"),
+            "volume_change": signal.get("onchain_metrics", {}).get("tx_volume_change", "N/A"),
+            "active_wallets_change": signal.get("onchain_metrics", {}).get("active_wallets_change", "N/A"),
+            "whale_outflow": signal.get("onchain_metrics", {}).get("whale_movements", "N/A"),
+            "priority_fee": signal.get("onchain_metrics", {}).get("network_health", "N/A")
+        }, diary_content)
+        
+        print(f"   Khuyến nghị AI: {ai_analysis.get('recommendation', 'N/A')}")
+        print(f"   Độ tin cậy AI: {ai_analysis.get('confidence', 'N/A')}")
+        print(f"   Lý do: {ai_analysis.get('reasoning', 'N/A')}")
+        
+        # Nếu AI khuyến nghị "STRONG_BUY" và độ tin cậy > 0.8, giải ngân toàn bộ vốn tháng
+        if ai_analysis.get('recommendation') == "STRONG_BUY" and ai_analysis.get('confidence', 0) > 0.8:
             total_monthly_budget = 3000  # Giả sử ngân sách 1 tháng là $3000
             adaptive_dca = total_monthly_budget  # Giải ngân 1 lần duy nhất
-            print(f"   💰 GIẢI NGÂN TOÀN BỘ: ${adaptive_dca:.2f}")
+            print(f"   💰 GIẢI NGÂN TOÀN BỘ THEO AI: ${adaptive_dca:.2f}")
         
         # Tổng hợp kết quả
         result = {
@@ -130,6 +157,7 @@ class SolanaQuantFund:
             "dca_amount": adaptive_dca,
             "decision": final_decision['decision'],
             "monthly_plan": monthly_plan,
+            "ai_analysis": ai_analysis,
             "risk_metrics": self.risk.get_risk_metrics()
         }
         
