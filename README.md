@@ -1,38 +1,102 @@
 # 🏛️ Solana DCA AI Learner
 
-> Hệ thống đầu tư định lượng trên Solana với khả năng tự học và tự cải thiện.
+> Hệ thống đầu tư định lượng trên Solana với khả năng tự học, tự cải thiện và tích hợp TradingView.
 
-**Version:** v1.0.0 | **Release Date:** 2026-04-13
+**Version:** v2.0.0 | **Release Date:** 2026-04-13
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/GUI-Streamlit-red)
 ![License](https://img.shields.io/badge/License-MIT-green)
+![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen)
 
-## ✨ Tính năng
+---
 
-- **Monthly Sniper DCA**: Tìm kiếm thời điểm vàng duy nhất trong tháng để giải ngân vốn lớn
-- **Multi-Agent System**: 3 AI agents (Bull / Bear / Arbiter) tranh luận để đưa ra quyết định DCA tối ưu
-- **Adaptive DCA**: Tự điều chỉnh chiến lược giữa "DCA thường ngày" và "Sniper DCA tháng"
-- **Risk Engine**: Kelly Criterion, VaR, Volatility Scaling, Max Drawdown control
-- **Signal Engine**: RSI, MACD, On-chain metrics, Whale tracking
-- **Reflection Engine**: Tự ghi nhật ký, đánh giá sai lầm và rút bài học
-- **Improvement Proposer**: Tự động phân tích nhật ký để đề xuất cải tiến mô hình
+## 🎯 Tổng quan
+
+Solana DCA AI Learner là một hệ thống giao dịch định lượng (Quant Trading) hoàn chỉnh với khả năng:
+- **Tự học từ lịch sử** (Offline Learning)
+- **Phân tích thời gian thực** (Online Learning với GPT-4/Gemini)
+- **Tự động khám phá indicator mới** từ TradingView
+- **Backtest và tối ưu hóa** chiến lược tự động
+- **Quản lý rủi ro chuyên nghiệp** với Circuit Breakers
+
+---
+
+## ✨ Tính năng chính
+
+### 🧠 **AI & Machine Learning**
+- **Multi-Agent System**: 3 AI agents (Bull / Bear / Arbiter) tranh luận để đưa ra quyết định
 - **AI Brain (Online)**: Tích hợp GPT-4, Gemini để phân tích thị trường thời gian thực
-- **Custom Model Selection**: Chọn bất kỳ model AI nào (GPT-4, GPT-3.5, Gemini Pro, Gemini Flash)
-- **Settings GUI**: Tab cấu hình chuyên nghiệp để quản lý API Keys và tham số
-- **Version Management**: Quản lý phiên bản, rollback khi cần
+- **Offline Learning**: Tự học từ nhật ký đầu tư và tự điều chỉnh trọng số
+- **ML Forecasting**: XGBoost dự báo giá 24h tới
+- **Deliberation Layer**: Hội đồng AI thảo luận trước khi quyết định
 
-## 🏗️ Kiến trúc
+### 📊 **Phân tích & Dữ liệu**
+- **Market Regime Detection**: Phát hiện 5 trạng thái thị trường (Bull/Bear/Sideways/Crisis/Transition)
+- **Sentiment Analysis**: Phân tích cảm xúc từ Twitter & Reddit
+- **On-chain Data**: TVL, DEX Volume, Whale movements, Network health (real-time)
+- **Macro Indicators**: S&P 500, DXY, VIX, Gold, BTC correlation
+- **Technical Indicators**: RSI, MACD, EMA, Bollinger Bands, và hơn 20 chỉ báo khác
+
+### 🔄 **TradingView Integration (NEW!)**
+- **Auto-Discovery**: Tự động phát hiện các indicator hot/trending từ TradingView
+- **Pine Script Converter**: Chuyển đổi Pine Script sang Python tự động
+- **Auto-Backtesting**: Chạy backtest cho indicator mới và xếp hạng hiệu suất
+- **Smart Selection**: Tự động chọn top indicator tốt nhất để tích hợp
+
+### 💰 **Chiến lược & Thực thi**
+- **Monthly Sniper DCA**: Tìm thời điểm vàng duy nhất trong tháng để giải ngân
+- **Adaptive DCA**: Tự điều chỉnh số tiền DCA theo điều kiện thị trường
+- **Multi-Exchange Support**: Binance, OKX, Bybit, Coinbase, Kraken với Smart Order Routing
+- **Portfolio Optimization**: Markowitz Mean-Variance, Black-Litterman
+- **Paper Trading Mode**: Mô phỏng giao dịch mà không dùng tiền thật
+
+### 🛡️ **Quản lý Rủi ro**
+- **Kelly Criterion (Fixed)**: Công thức đúng `f* = W - (1-W)/R`
+- **Circuit Breakers**: Dừng giao dịch khi drawdown > 20%
+- **VaR & CVaR**: Đo lường rủi ro tối đa
+- **Position Sizing**: Giới hạn tối đa 25% vốn mỗi lệnh
+- **Max Drawdown Control**: Theo dõi và cảnh báo sụt giảm
+
+### 🔬 **Backtesting & Testing**
+- **Advanced Backtesting**: Walk-forward optimization với dữ liệu 1-2 năm
+- **Performance Metrics**: Sharpe Ratio, Sortino Ratio, Calmar Ratio, Max Drawdown
+- **Unit Tests**: Kiểm tra công thức Kelly và các hàm quan trọng
+- **Out-of-sample Testing**: Đảm bảo không overfitting
+
+---
+
+## 🏗️ Kiến trúc hệ thống
 
 ```
-Signal Engine → Multi-Agent System → Risk Engine → Monthly Planner → AI Brain (GPT-4/Gemini)
-                                                              ↓
-                                                      Reflection Engine (Tự học)
-                                                              ↓
-                                                      Improvement Proposer (Đề xuất)
-                                                              ↓
-                                                      Adaptive DCA (Thực thi)
+┌─────────────────────────────────────────────────────────────────┐
+│                    TradingView Integration                      │
+│  Auto-Discovery → Pine Converter → Backtest → Rank & Select    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      Data Collection Layer                       │
+│  On-chain │ Sentiment │ Macro │ Multi-Exchange │ Historical    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     Analysis & Intelligence                      │
+│  Signal Engine → Regime Detection → ML Forecasting              │
+│  Multi-Agent System → Deliberation Layer → AI Brain (LLM)       │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    Risk & Portfolio Management                   │
+│  Kelly Criterion → Circuit Breakers → Portfolio Optimization    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                      Execution & Learning                        │
+│  Paper Trading / Live Trading → Reflection Engine → Self-Learn  │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## 🚀 Cài đặt
 
@@ -55,6 +119,8 @@ copy .env.example .env    # Windows
 # Mở .env và điền API keys
 ```
 
+---
+
 ## 🖥️ Sử dụng
 
 ### Chạy Dashboard GUI
@@ -75,37 +141,102 @@ python main.py
 5. Điều chỉnh vốn, DCA amount, Max Drawdown, Kelly Fraction
 6. Nhấn **"💾 Lưu cấu hình"**
 
+---
+
 ## 📁 Cấu trúc thư mục
 
 ```
 solana-dca-ai-learner/
-├── VERSION                  # Số phiên bản hiện tại
-├── CHANGELOG.md             # Lịch sử thay đổi
-├── config.py               # Tham số hệ thống
-├── main.py                 # Entry point CLI
-├── dashboard.py            # GUI Streamlit
-├── requirements.txt        # Dependencies
-├── .env.example            # Template API keys
-├── .gitignore              # Git ignore rules
-├── README.md               # Tài liệu chính
-├── USAGE.md                # Hướng dẫn chi tiết
+├── VERSION                     # Số phiên bản hiện tại
+├── CHANGELOG.md                # Lịch sử thay đổi
+├── config.py                   # Tham số hệ thống
+├── main.py                     # Entry point CLI
+├── dashboard.py                # GUI Streamlit
+├── requirements.txt            # Dependencies
+├── .env.example                # Template API keys
+├── .gitignore                  # Git ignore rules
+├── README.md                   # Tài liệu chính
+├── USAGE.md                    # Hướng dẫn chi tiết
 ├── engine/
-│   ├── reflection.py       # Bộ máy tự phản biện
-│   ├── agents.py           # Multi-Agent System
-│   ├── risk.py             # Quản trị rủi ro
-│   ├── signals.py          # Tín hiệu phân tích
-│   ├── monthly_planner.py  # Kế hoạch DCA hàng tháng
-│   ├── ai_brain.py         # AI Brain (GPT-4/Gemini)
-│   ├── exchanges.py        # Kết nối sàn giao dịch
-│   └── online_learner.py   # AI học online
-├── memory/
-│   ├── INVESTMENT_DIARY.md  # Nhật ký đầu tư
-│   └── LESSONS_LEARNED.md   # Bài học rút ra
-├── data/                    # Dữ liệu thu thập
-├── reports/                 # Báo cáo hiệu suất
-├── backtests/               # Kết quả backtest
-└── strategies/              # Chiến lược giao dịch
+│   ├── ai_brain.py             # AI Brain (GPT-4/Gemini)
+│   ├── agents.py               # Multi-Agent System
+│   ├── backtester.py           # Advanced Backtesting
+│   ├── deliberation.py         # Multi-agent Discussion
+│   ├── exchanges.py            # Legacy exchange connector
+│   ├── forecaster.py           # XGBoost Price Prediction
+│   ├── historical_data.py      # Historical data manager
+│   ├── macro.py                # S&P500, DXY, VIX, Gold
+│   ├── monthly_planner.py      # Kế hoạch DCA hàng tháng
+│   ├── multi_exchange.py       # Smart Order Routing (5 sàn)
+│   ├── offline_learner.py      # Offline AI self-learning
+│   ├── onchain.py              # TVL, DEX, Whale tracking
+│   ├── online_learner.py       # Online AI learning
+│   ├── paper_trading.py        # Simulation mode
+│   ├── portfolio.py            # Markowitz Optimization
+│   ├── reflection.py           # Bộ máy tự phản biện
+│   ├── regime.py               # Market state detection
+│   ├── risk.py                 # Fixed Kelly & Risk control
+│   ├── security.py             # API Key encryption
+│   ├── sentiment.py            # Social media analysis
+│   ├── signals.py              # Technical indicators
+│   ├── tv_backtester.py        # TradingView indicator backtest
+│   ├── tv_connector.py         # TradingView API connector
+│   ├── tv_discovery.py         # Auto-discover indicators
+│   └── tv_indicator_converter.py # Pine Script → Python
+├── tests/
+│   └── test_kelly.py           # Unit Tests
+├── memory/                     # AI Memory (auto-generated)
+├── data/                       # Dữ liệu thu thập
+├── reports/                    # Báo cáo hiệu suất
+├── backtests/                  # Kết quả backtest
+└── strategies/                 # Chiến lược giao dịch
 ```
+
+---
+
+## 📊 Lịch sử phát triển
+
+### v2.0.0 (2026-04-13) - TradingView Integration
+**Tính năng mới:**
+- ✅ Tích hợp TradingView: Auto-discovery, Pine Script converter
+- ✅ Tự động backtest và xếp hạng indicator mới
+- ✅ Macro Indicators: S&P 500, DXY, VIX, Gold
+- ✅ ML Forecasting: XGBoost dự báo giá
+- ✅ Multi-Agent Deliberation Layer
+
+### v1.0.0 (2026-04-12) - Production Release
+**Tính năng cốt lõi:**
+- ✅ Multi-Agent System (Bull/Bear/Arbiter)
+- ✅ Reflection Engine (Tự học từ sai lầm)
+- ✅ Risk Engine (Kelly Criterion, VaR)
+- ✅ Signal Engine (RSI, MACD, On-chain)
+- ✅ Monthly Sniper DCA
+- ✅ AI Brain (GPT-4, Gemini)
+- ✅ Custom Model Selection
+- ✅ Professional Settings Tab
+- ✅ Dashboard GUI (6 tabs)
+- ✅ Version Management System
+
+**Giai đoạn 1 (Nền tảng):**
+- ✅ Market Regime Detection
+- ✅ Advanced Backtesting Engine
+- ✅ Fixed Kelly Criterion Formula
+- ✅ Circuit Breakers
+- ✅ Paper Trading Mode
+- ✅ Unit Tests
+
+**Giai đoạn 2 (Dữ liệu & Thực thi):**
+- ✅ Sentiment Analysis (Twitter + Reddit)
+- ✅ On-chain Data (TVL, DEX, Whale)
+- ✅ Multi-Exchange Support (5 sàn)
+- ✅ Portfolio Optimization (Markowitz, Black-Litterman)
+
+**Giai đoạn 3 (Cao cấp & AI):**
+- ✅ Macro Indicators Integration
+- ✅ ML-based Price Forecasting
+- ✅ Multi-Agent Collaboration
+
+---
 
 ## 🔄 Vòng lặp tự cải thiện
 
@@ -117,7 +248,10 @@ solana-dca-ai-learner/
 6. **Đánh giá** kết quả sau 1 tuần
 7. **Rút bài học** và đề xuất cải tiến mô hình
 8. **Tự động điều chỉnh** trọng số dựa trên hiệu suất
-9. **Lặp lại** với mô hình đã được cải thiện
+9. **Khám phá indicator mới** từ TradingView
+10. **Lặp lại** với mô hình đã được cải thiện
+
+---
 
 ## 🏷️ Quản lý phiên bản
 
@@ -136,10 +270,31 @@ git tag
 git checkout v1.0.0
 ```
 
+---
+
 ## ⚠️ Disclaimer
 
 Đây là công cụ hỗ trợ quyết định, **không phải lời khuyên đầu tư**. Luôn tự nghiên cứu (DYOR) trước khi giao dịch.
 
+---
+
 ## 📄 License
 
 MIT License
+
+---
+
+## 🤝 Đóng góp
+
+Mọi đóng góp đều được chào đón! Vui lòng tạo Pull Request hoặc Issue trên GitHub.
+
+---
+
+## 📞 Liên hệ
+
+- **GitHub**: https://github.com/baok1210/solana-dca-ai-learner
+- **Issues**: https://github.com/baok1210/solana-dca-ai-learner/issues
+
+---
+
+**Được xây dựng với ❤️ bởi OpenClaw AI**
