@@ -1,11 +1,10 @@
 """
-Risk Engine (Fixed) - Quản trị rủi ro với Kelly Criterion đúng
-Bao gồm: Kelly Criterion, VaR, Volatility Scaling, Circuit Breakers
+Dynamic Risk Engine - Quản trị rủi ro thông minh
+Bao gồm: Kelly Criterion, VaR, Volatility Scaling
 """
 
 import numpy as np
 from typing import Dict, List
-from datetime import datetime
 
 class RiskEngine:
     """Bộ máy quản trị rủi ro động"""
@@ -16,36 +15,29 @@ class RiskEngine:
         self.peak_capital = initial_capital
         self.trade_history = []
         
-        # Circuit Breakers
-        self.max_daily_loss_pct = 0.05  # Max 5% loss per day
-        self.max_consecutive_losses = 3  # Stop after 3 consecutive losses
-        self.max_drawdown_limit = 0.20  # Stop at 20% drawdown
-        
-        # Tracking
-        self.daily_pnl = []
-        self.consecutive_losses = 0
-        self.trading_halted = False
-        self.halt_reason = ""
-        
     def kelly_criterion(self, win_rate: float, avg_win: float, avg_loss: float) -> float:
         """
-        Tính Kelly Criterion theo công thức đúng:
-        f* = W - (1-W)/R
-        Trong đó:
-        - W = win_rate (tỷ lệ thắng)
-        - R = avg_win / avg_loss (tỷ lệ lợi nhuận/lỗ)
+        Tính toán Kelly Criterion để xác định % vốn nên đầu tư
+        
+        Kelly % = (win_rate * avg_win - (1 - win_rate) * avg_loss) / avg_win
+        
+        Args:
+            win_rate: Tỷ lệ thắng (0-1)
+            avg_win: Lợi nhuận trung bình khi thắng (%)
+            avg_loss: Thua lỗ trung bình khi thua (%)
+        
+        Returns:
+            Kelly fraction (0-1)
         """
-        if avg_loss <= 0 or avg_win <= 0:
+        if avg_win <= 0:
             return 0.0
+            
+        kelly = (win_rate * avg_win - (1 - win_rate) * avg_loss) / avg_win
         
-        R = avg_win / avg_loss
-        kelly = win_rate - (1 - win_rate) / R
+        # Áp dụng Half Kelly để an toàn hơn
+        kelly_fraction = max(0, min(kelly * 0.5, 0.25))  # Giới hạn tối đa 25%
         
-        # Áp dụng Half Kelly để an toàn
-        half_kelly = kelly * 0.5
-        
-        # Giới hạn trong khoảng [0, 0.25]
-        return max(0, min(half_kelly, 0.25))
+        return kelly_fraction
     
     def calculate_position_size(self, 
                                 win_rate: float, 
@@ -154,89 +146,13 @@ class RiskEngine:
         
         return adjusted_amount
     
-    # Circuit Breakers
-    def check_circuit_breakers(self, daily_loss_pct: float, current_drawdown: float) -> Dict:
-        """
-        Kiểm tra các circuit breakers
-        
-        Args:
-            daily_loss_pct: Lỗ hàng ngày (%)
-            current_drawdown: Drawdown hiện tại
-        
-        Returns:
-            Dict với status và reason
-        """
-        # Max daily loss check
-        if daily_loss_pct < -self.max_daily_loss_pct:
-            self.trading_halted = True
-            self.halt_reason = f"Daily loss limit exceeded: {daily_loss_pct:.2%} < -{self.max_daily_loss_pct:.2%}"
-            return {"status": "HALTED", "reason": self.halt_reason}
-        
-        # Max drawdown check
-        if current_drawdown > self.max_drawdown_limit:
-            self.trading_halted = True
-            self.halt_reason = f"Max drawdown exceeded: {current_drawdown:.2%} > {self.max_drawdown_limit:.2%}"
-            return {"status": "HALTED", "reason": self.halt_reason}
-        
-        # Consecutive losses check
-        if self.consecutive_losses >= self.max_consecutive_losses:
-            self.trading_halted = True
-            self.halt_reason = f"Max consecutive losses exceeded: {self.consecutive_losses} >= {self.max_consecutive_losses}"
-            return {"status": "HALTED", "reason": self.halt_reason}
-        
-        # Reset halt if all checks passed
-        self.trading_halted = False
-        self.halt_reason = ""
-        return {"status": "ACTIVE", "reason": ""}
-    
-    def record_trade(self, pnl: float):
-        """Ghi nhận giao dịch để theo dõi"""
-        self.trade_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "pnl": pnl,
-            "capital_after": self.capital + pnl
-        })
-        
-        # Update capital
-        self.capital += pnl
-        
-        # Update consecutive losses
-        if pnl < 0:
-            self.consecutive_losses += 1
-        else:
-            self.consecutive_losses = 0
-        
-        # Update daily PnL
-        self.daily_pnl.append({
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "pnl": pnl
-        })
-    
-    def reset_daily_counters(self):
-        """Reset bộ đếm hàng ngày"""
-        self.daily_pnl = []
-    
-    def get_risk_metrics(self) -> Dict:
-        """Lấy các chỉ số rủi ro hiện tại"""
-    def circuit_breaker(self, current_drawdown: float) -> bool:
-        """
-        Dừng khẩn cấp nếu drawdown vượt ngưỡng
-        """
-        if current_drawdown > 0.20:
-            print("🚨 CIRCUIT BREAKER TRIGGERED: Max Drawdown Exceeded!")
-            return True
-        return False
-
     def get_risk_metrics(self) -> Dict:
         """Lấy các chỉ số rủi ro hiện tại"""
         return {
             "current_capital": self.capital,
             "peak_capital": self.peak_capital,
             "max_drawdown": self.max_drawdown,
-            "total_trades": len(self.trade_history),
-            "consecutive_losses": self.consecutive_losses,
-            "trading_halted": self.trading_halted,
-            "halt_reason": self.halt_reason
+            "total_trades": len(self.trade_history)
         }
 
 # Test
@@ -263,14 +179,3 @@ if __name__ == "__main__":
         volatility=0.4
     )
     print(f"Adaptive DCA Amount: ${dca_amount:.2f}")
-    
-    # Test Circuit Breakers
-    circuit_check = risk_engine.check_circuit_breakers(
-        daily_loss_pct=-0.03,
-        current_drawdown=0.15
-    )
-    print(f"Circuit Breaker: {circuit_check['status']}")
-    
-    # Test Circuit Breaker
-    cb_triggered = risk_engine.circuit_breaker(current_drawdown=0.25)
-    print(f"Circuit Breaker Triggered: {cb_triggered}")
