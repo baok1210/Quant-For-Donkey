@@ -9,6 +9,7 @@ from engine.reflection import ReflectionEngine
 from engine.agents import MultiAgentSystem
 from engine.risk import RiskEngine
 from engine.signals import SignalEngine
+from engine.monthly_planner import MonthlyPlanner
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana"""
@@ -18,6 +19,7 @@ class SolanaQuantFund:
         self.agents = MultiAgentSystem()
         self.risk = RiskEngine(initial_capital)
         self.signals = SignalEngine()
+        self.monthly_planner = MonthlyPlanner()  # Thêm monthly planner
         
         self.capital = initial_capital
         self.dca_history = []
@@ -107,6 +109,19 @@ class SolanaQuantFund:
         )
         print("   ✓ Quyết định đã được ghi lại")
         
+        # Bước 6: Phân tích kế hoạch tháng
+        print("\n📅 Bước 6: Phân tích kế hoạch DCA tháng")
+        monthly_plan = self.monthly_planner.find_entry_window(None, signal)
+        print(f"   Kế hoạch tháng: {monthly_plan['recommendation']}")
+        print(f"   Độ tin cậy: {monthly_plan['confidence']:.2%}")
+        print(f"   Lý do: {monthly_plan['reason']}")
+        
+        # Nếu là "STRONG_ENTRY_NOW", giải ngân toàn bộ vốn tháng
+        if monthly_plan['recommendation'] == "STRONG_ENTRY_NOW":
+            total_monthly_budget = 3000  # Giả sử ngân sách 1 tháng là $3000
+            adaptive_dca = total_monthly_budget  # Giải ngân 1 lần duy nhất
+            print(f"   💰 GIẢI NGÂN TOÀN BỘ: ${adaptive_dca:.2f}")
+        
         # Tổng hợp kết quả
         result = {
             "timestamp": datetime.now().isoformat(),
@@ -114,6 +129,7 @@ class SolanaQuantFund:
             "agent_analysis": final_decision,
             "dca_amount": adaptive_dca,
             "decision": final_decision['decision'],
+            "monthly_plan": monthly_plan,
             "risk_metrics": self.risk.get_risk_metrics()
         }
         

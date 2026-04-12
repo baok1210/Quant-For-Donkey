@@ -47,6 +47,25 @@ class ReflectionEngine:
             
         return "Đã cập nhật đánh giá."
 
+    def propose_improvements(self):
+        """Phân tích nhật ký để đề xuất cải tiến kỹ thuật"""
+        if not os.path.exists(self.lessons_path):
+            return "Chưa có đủ dữ liệu để đề xuất."
+            
+        with open(self.lessons_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # AI logic phân tích keyword từ các bài học cũ
+        proposals = []
+        if "phí mạng" in content.lower():
+            proposals.append("Tích hợp 'Jito Priority Fee' vào trọng số quyết định DCA (Ưu tiên: Cao)")
+        if "sentiment" in content.lower():
+            proposals.append("Sử dụng 'Twitter API v2' thay cho bộ lọc sentiment cơ bản (Ưu tiên: Trung bình)")
+        if "rsi" in content.lower():
+            proposals.append("Thêm chỉ báo 'Stochastic RSI' để bắt đáy chính xác hơn trong khung 4H (Ưu tiên: Cao)")
+            
+        return proposals
+
     def _add_lesson(self, situation, action_item):
         """Ghi nhận bài học mới"""
         date_str = datetime.datetime.now().strftime("%Y-%m-%d")

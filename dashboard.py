@@ -35,12 +35,18 @@ st.sidebar.markdown("Cấu hình hệ thống")
 # Tạo các tab
 tab1, tab2, tab3, tab4 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích"])
 
+from engine.monthly_planner import MonthlyPlanner
+
 # --- Tab 1: Dashboard ---
 with tab1:
     st.header("📊 Tổng quan hệ thống")
     
+    # Sniper DCA Monthly Plan
+    st.info("🎯 **Kế hoạch DCA Sniper Tháng này:** Đang chờ thời điểm giá sụt giảm mạnh nhất để giải ngân.")
+    
     # Hiển thị thông tin cơ bản
     col1, col2, col3 = st.columns(3)
+
     
     with col1:
         st.metric("Vốn hiện tại", "$10,000.00")
@@ -78,18 +84,30 @@ with tab1:
         st.write("**Kelly Fraction**")
         st.write("15%")
 
-# --- Tab 2: Nhật ký ---
 with tab2:
-    st.header("📝 Nhật ký đầu tư")
+    st.header("📝 Nhật ký & Tự cải thiện")
     
-    # Hiển thị nội dung file INVESTMENT_DIARY.md
-    diary_path = "memory/INVESTMENT_DIARY.md"
-    if os.path.exists(diary_path):
-        with open(diary_path, 'r', encoding='utf-8') as f:
-            diary_content = f.read()
-        st.markdown(diary_content)
-    else:
-        st.info("Chưa có nhật ký đầu tư nào.")
+    col_diary, col_proposals = st.columns([2, 1])
+    
+    with col_diary:
+        st.subheader("Nhật ký đầu tư")
+        diary_path = "memory/INVESTMENT_DIARY.md"
+        if os.path.exists(diary_path):
+            with open(diary_path, 'r', encoding='utf-8') as f:
+                diary_content = f.read()
+            st.markdown(diary_content)
+            
+    with col_proposals:
+        st.subheader("💡 Đề xuất cải tiến AI")
+        reflection = ReflectionEngine()
+        proposals = reflection.propose_improvements()
+        
+        if isinstance(proposals, list):
+            for p in proposals:
+                st.success(f"✓ {p}")
+        else:
+            st.info(proposals)
+
 
 # --- Tab 3: Tác vụ ---
 with tab3:

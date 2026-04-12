@@ -181,9 +181,15 @@ class SignalEngine:
             score += 0.2
             signals.append("Active wallets tăng")
             
-        if onchain["network_health"] == "congested":
-            score -= 0.2
-            signals.append("Mạng quá tải")
+        # On-chain scoring nâng cao cho Solana
+        if onchain.get("priority_fee", 0) < 0.00001: # Mạng rất rẻ -> Cơ hội tốt
+            score += 0.1
+            signals.append("Mạng Solana đang trống, phí cực rẻ")
+            
+        if onchain.get("jito_tips_24h", 0) > 1000: # Tips cao -> Cá voi đang hoạt động mạnh
+            score += 0.15
+            signals.append("Dòng tiền Smart Money (Jito tips) đang tăng")
+
             
         # Xác định tín hiệu cuối cùng
         if score > 0.3:

@@ -8,11 +8,13 @@
 
 ## ✨ Tính năng
 
+- **Monthly Sniper DCA**: Tìm kiếm thời điểm vàng duy nhất trong tháng để giải ngân vốn lớn
 - **Multi-Agent System**: 3 AI agents (Bull / Bear / Arbiter) tranh luận để đưa ra quyết định DCA tối ưu
-- **Adaptive DCA**: Tự điều chỉnh số tiền DCA theo điều kiện thị trường
+- **Adaptive DCA**: Tự điều chỉnh chiến lược giữa "DCA thường ngày" và "Sniper DCA tháng"
 - **Risk Engine**: Kelly Criterion, VaR, Volatility Scaling, Max Drawdown control
 - **Signal Engine**: RSI, MACD, On-chain metrics, Whale tracking
 - **Reflection Engine**: Tự ghi nhật ký, đánh giá sai lầm và rút bài học
+- **Improvement Proposer**: Tự động phân tích nhật ký để đề xuất cải tiến mô hình
 - **Dashboard GUI**: Giao diện Streamlit để theo dõi và quản lý
 
 ## 🏗️ Kiến trúc
