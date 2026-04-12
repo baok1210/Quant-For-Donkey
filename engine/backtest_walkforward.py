@@ -89,39 +89,49 @@ class WalkForwardBacktester:
         """Chạy test trên một khoảng dữ liệu"""
         paper = PaperTradingEngine(initial_balance=10000)
         
+        trade_returns = []
+        
         for idx, row in test_df.iterrows():
             signal, _ = strategy_func(row, params)
             
             if signal == "BUY":
-                paper.execute_with_slippage("BUY", row['close'], 500)
-            elif signal == "SELL":
-                paper.execute_with_slippage("SELL", row['close'], 500)
+                result = paper.execute_with_slippage("BUY", row['close'], 500)
+                if result.get("success"):
+                    # Ghi lại entry
+                    entry_price = result["fill_price"]
+                    entry_idx = idx
+            elif signal == "SELL" and "entry_price" in locals():
+                result = paper.execute_with_slippage("SELL", row['close'], 500)
+                if result.get("success"):
+                    # Tính PnL từ entry -> exit
+                    pnl = (result["fill_price"] - entry_price) / entry_price
+                    trade_returns.append(pnl)
         
         summary = paper.get_portfolio_summary()
         
-        # Tính metrics
-        returns = [(t['fill_price'] - test_df.loc[test_df.index[test_df.index.get_loc(t.get('timestamp', ''))]['close'] if t['timestamp'] in test_df.index else 0)) 
-                   for t in paper.trade_history]
-        
-        if returns:
-            ret_series = pd.Series(returns)
+        # Tính metrics từ trade_returns
+        if trade_returns:
+            ret_series = pd.Series(trade_returns)
             sharpe = ret_series.mean() / ret_series.std() if ret_series.std() > 0 else 0
+            total_return = (summary["total_value"] - 10000) / 10000
             max_dd = abs(min(ret_series.cumsum().min(), 0))
             win_rate = len(ret_series[ret_series > 0]) / len(ret_series)
         else:
             sharpe = 0
+            total_return = 0
             max_dd = 0
             win_rate = 0
         
         return {
             "final_balance": summary["total_value"],
-            "total_return_pct": (summary["total_value"] - 10000) / 10000 * 100,
+            "total_return_pct": total_return * 100,
             "sharpe_ratio": sharpe,
             "max_drawdown_pct": max_dd,
             "win_rate": win_rate,
             "total_trades": len(paper.trade_history),
             "slippage_cost": summary.get("total_slippage_cost", 0),
-            "spread_cost": summary.get("total_spread_cost", 0)
+            "spread_cost": summary.get("total_spread_cost", 0),
+            "trade_count": len(trade_returns)
         }
     
     def _aggregate_results(self, all_results: List[Dict]) -> Dict:

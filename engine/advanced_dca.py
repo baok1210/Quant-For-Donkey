@@ -34,9 +34,9 @@ class AdvancedDCA:
         is_weekend = datetime.now().weekday() in [5, 6]  # Sat/Sun
         weekend_mult = self.weekend_multiplier if is_weekend else 1.0
         
-        # 3. Liquidation Analysis (mock)
-        liquidations = self.data_aggregator.get_liquidations("SOL")
-        near_liq_zone = self._is_near_liquidation_zone(current_price, liquidations["major_liq_zones"])
+        # 3. Liquidation Analysis
+        liquidations = self.data_aggregator.get_liquidation_zones("SOLUSDT", current_price)
+        near_liq_zone = self._is_near_liquidation_zone(current_price, liquidations["near_zones"])
         
         # 4. Correlation Analysis
         correlation = self.data_aggregator.calculate_correlation(
@@ -82,21 +82,29 @@ class AdvancedDCA:
             "reasons": reason,
             "funding_rate": funding_rate,
             "is_weekend": is_weekend,
-            "correlation": correlation["correlation"]
+            "correlation": correlation["correlation"],
+            "liquidation_zones": liquidations["near_zones"],  # Include zone info
+            "fallback_warning": liquidations.get("warning")  # Include API warnings
         }
     
-    def _is_near_liquidation_zone(self, current_price: float, zones: List[float], tolerance=0.5) -> Dict:
-        """Kiểm tra có gần vùng liquidation không"""
+    def _is_near_liquidation_zone(self, current_price: float, zones: List[Dict], tolerance=0.5) -> Dict:
+        """Kiểm tra có gần vùng liquidation không (dùng kết quả từ get_liquidation_zones)"""
+        if not zones:
+            return {"near_zone": False, "zones": []}
+        
         for zone in zones:
-            distance_pct = abs(current_price - zone) / current_price * 100
+            distance_pct = zone["distance_pct"]
             if distance_pct < tolerance:
                 return {
                     "near_zone": True,
-                    "zone_price": zone,
+                    "zone_price": zone["avg_price"],
                     "distance_pct": distance_pct,
-                    "direction": "SHORT_LIQUIDATION" if current_price > zone else "LONG_LIQUIDATION"
+                    "direction": "SHORT_LIQUIDATION" if current_price > zone['avg_price'] else "LONG_LIQUIDATION",
+                    "zone_size": zone["total_size"],
+                    "dominant_side": zone["dominant_side"]
                 }
-        return {"near_zone": False}
+        
+        return {"near_zone": False, "zones": zones}
     
     def _get_btc_support(self) -> float:
         """Mock: Lấy support của BTC (thực tế sẽ từ technical analysis)"""

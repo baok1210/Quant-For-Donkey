@@ -83,19 +83,109 @@ class CryptoDataAggregator:
                     "long_liquidations": long_liq,
                     "short_liquidations": short_liq,
                     "long_short_liq_ratio": long_liq / short_liq if short_liq > 0 else float('inf'),
+                    "fallback_mode": False,
+                    "warning": None,
                     "timestamp": datetime.now().isoformat()
                 }
-        except:
+        except Exception as e:
+            print(f"⚠️ WARNING: Liquidation API failed ({e}). Using fallback mode.")
             pass
         
-        # Fallback: mock data
+        # Fallback có cảnh báo rõ ràng
         return {
             "symbol": symbol,
-            "liquidations_24h": 1500000, 
-            "long_liquidations": 900000,
-            "short_liquidations": 600000,
-            "long_short_liq_ratio": 1.5
+            "liquidations_24h": 0,
+            "long_liquidations": 0,
+            "short_liquidations": 0,
+            "long_short_liq_ratio": 1.0,
+            "fallback_mode": True,
+            "warning": "⚠️ API FAILED - Using estimated data. DCA timing may be unreliable.",
+            "timestamp": datetime.now().isoformat()
         }
+
+    def get_liquidation_zones(self, symbol: str = "SOLUSDT", current_price: float = None, tolerance_pct: float = 2.0) -> Dict:
+        """
+        Phát hiện vùng Liquidation Clusters thực sự
+        Cluster các lệnh liquidation gần nhau thành zones
+        """
+        try:
+            url = f"{self.binance_data_api}/liquidationOrders"
+            params = {"symbol": symbol, "limit": 1000}
+            resp = requests.get(url, params=params, timeout=5).json()
+            
+            if not resp:
+                return {"zones": [], "fallback_mode": True, "warning": "No liquidation data"}
+            
+            # Cluster liquidations by price
+            liq_prices = []
+            for item in resp:
+                price = float(item['price'])
+                qty = float(item['origQty'])
+                side = item['side']  # BUY = long liquidation, SELL = short liquidation
+                liq_prices.append({"price": price, "size": qty, "side": side})
+            
+            # Group vào các cluster (tolerance 2%)
+            liq_prices.sort(key=lambda x: x['price'])
+            clusters = []
+            current_cluster = []
+            
+            for liq in liq_prices:
+                if not current_cluster:
+                    current_cluster.append(liq)
+                else:
+                    ref_price = current_cluster[0]['price']
+                    if abs(liq['price'] - ref_price) / ref_price < (tolerance_pct / 100):
+                        current_cluster.append(liq)
+                    else:
+                        if len(current_cluster) >= 3:  # Chỉ lấy cluster có ít nhất 3 lệnh
+                            clusters.append(current_cluster)
+                        current_cluster = [liq]
+            
+            if len(current_cluster) >= 3:
+                clusters.append(current_cluster)
+            
+            # Tính toán các zones
+            zones = []
+            for cluster in clusters:
+                avg_price = sum(l['price'] for l in cluster) / len(cluster)
+                total_size = sum(l['size'] for l in cluster)
+                long_size = sum(l['size'] for l in cluster if l['side'] == 'BUY')
+                short_size = sum(l['size'] for l in cluster if l['side'] == 'SELL')
+                
+                zones.append({
+                    "avg_price": avg_price,
+                    "total_size": total_size,
+                    "long_liquidation_size": long_size,
+                    "short_liquidation_size": short_size,
+                    "count": len(cluster),
+                    "dominant_side": "LONG" if long_size > short_size else "SHORT"
+                })
+            
+            # Sắp xếp theo tổng size
+            zones.sort(key=lambda x: x['total_size'], reverse=True)
+            
+            # Kiểm tra giá hiện tại có gần zone nào không
+            near_zones = []
+            if current_price:
+                for zone in zones:
+                    distance_pct = abs(current_price - zone['avg_price']) / current_price * 100
+                    if distance_pct < tolerance_pct:
+                        near_zones.append({
+                            **zone,
+                            "distance_pct": distance_pct,
+                            "direction": "BELOW" if current_price > zone['avg_price'] else "ABOVE"
+                        })
+            
+            return {
+                "zones": zones[:10],  # Top 10 zones lớn nhất
+                "near_zones": near_zones,
+                "total_zones": len(zones),
+                "fallback_mode": False,
+                "warning": None
+            }
+        except Exception as e:
+            print(f"⚠️ WARNING: Liquidation Zone Detection failed ({e})")
+            return {"zones": [], "near_zones": [], "fallback_mode": True, "warning": f"API failed: {e}"}
 
     def get_funding_history(self, symbol: str = "SOLUSDT", limit: int = 100) -> List[Dict]:
         """Lấy lịch sử funding rate (cho phân tích chu kỳ)"""
