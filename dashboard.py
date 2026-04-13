@@ -13,6 +13,10 @@ from engine.reflection import ReflectionEngine
 from engine.agents import MultiAgentSystem
 from engine.risk import RiskEngine
 from engine.signals import SignalEngine
+from engine.order_flow import OrderFlowAnalyzer
+from engine.portfolio_manager import PortfolioManager
+from engine.alert_system import AlertSystem, AlertLevel
+from engine.forecaster import PriceForecaster
 
 # --- Cấu hình trang ---
 st.set_page_config(
@@ -50,7 +54,7 @@ st.sidebar.markdown("Cấu hình hệ thống")
 
 # --- Main Content ---
 # Tạo các tab
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "🌊 Order Flow", "⚙️ Cấu hình"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "🌊 Order Flow", "💼 Portfolio", "🔔 Alerts"])
 
 # --- Tab 5: Offline Learning ---
 with tab5:
@@ -191,6 +195,67 @@ with tab6:
                             color="cumulative_cvd",
                             color_continuous_scale="RdYlGn")
             st.plotly_chart(fig_cvd, use_container_width=True)
+
+# --- Tab 7: Portfolio ---
+with tab7:
+    st.header("💼 Portfolio Management")
+    st.markdown("Quản lý danh mục, tự động cân bằng tỷ trọng và tối ưu hóa lợi nhuận.")
+    
+    portfolio = PortfolioManager({"SOL": 25.4, "USDC": 4500.0})
+    portfolio.set_target_weights({"SOL": 0.6, "USDC": 0.4})
+    
+    current_sol_price = price_data['summary']['sol_price_avg']
+    
+    rebalance_data = portfolio.calculate_rebalance({"SOL": current_sol_price})
+    
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        st.metric("Total Value", f"${rebalance_data['total_value']:,.2f}")
+    with col_p2:
+        st.metric("Max Drift", f"{rebalance_data['max_drift_pct']:.2f}%", 
+                  delta="REBALANCE NEEDED" if rebalance_data['should_rebalance'] else "OK")
+    with col_p3:
+        st.metric("SOL Holdings", f"{portfolio.assets['SOL']:.2f} SOL")
+        
+    # Tỷ trọng hiện tại
+    st.write("### 📊 Current vs Target Weights")
+    weights_df = pd.DataFrame([
+        {"Asset": "SOL", "Current": rebalance_data['drifts']['SOL'] + 0.6, "Target": 0.6},
+        {"Asset": "USDC", "Current": rebalance_data['drifts']['USDC'] + 0.4, "Target": 0.4}
+    ])
+    st.table(weights_df)
+    
+    if rebalance_data['should_rebalance']:
+        st.warning("⚠️ Portfolio drift has exceeded threshold. Rebalancing recommended.")
+        if st.button("⚡ Execute Rebalance"):
+            portfolio.execute_rebalance(rebalance_data['trades'])
+            st.success("Portfolio successfully rebalanced!")
+            st.rerun()
+            
+    # Trade Plan
+    if rebalance_data['trades']:
+        st.write("### 📝 Suggested Trades:")
+        for trade in rebalance_data['trades']:
+            st.write(f"- **{trade['action']}** {trade['amount']:.4f} {trade['asset']} (Value: ${trade['value_usd']:.2f})")
+
+# --- Tab 8: Alerts ---
+with tab8:
+    st.header("🔔 Alert System History")
+    st.markdown("Theo dõi các cảnh báo thời gian thực từ hệ thống.")
+    
+    alerts = AlertSystem()
+    # Mock some history for display
+    alerts.alert_dca_opportunity("SOL", 0.85, ["RSI Oversold", "Strong Support"])
+    alerts.alert_order_flow_signal("SOL", "BULLISH", 0.92)
+    
+    history = alerts.get_alert_history()
+    
+    for alert in reversed(history):
+        level_icon = "✅" if alert['level'] == "SUCCESS" else "ℹ️"
+        with st.expander(f"{level_icon} {alert['title']} - {alert['timestamp'][:19]}"):
+            st.markdown(alert['message'])
+            st.caption(f"Channels: {', '.join(alert['channels'])}")
+
 
 
 from engine.monthly_planner import MonthlyPlanner
