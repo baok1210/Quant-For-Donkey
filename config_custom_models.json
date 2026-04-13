@@ -1,0 +1,12 @@
+{
+  "custom_models": {
+    "Local LLM": {
+      "endpoint": "http://localhost:1234/v1",
+      "api_key": "",
+      "model_name": "llama3",
+      "metadata": {},
+      "created_at": "2026-04-14T01:32:14.744948",
+      "last_used": null
+    }
+  }
+}

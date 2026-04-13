@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Demo: Test tất cả các chiến lược giao dịch
 """
@@ -11,7 +12,7 @@ sys.path.append('.')
 
 # Import các chiến lược
 from engine.strategies.ema_crossover import EMACrossoverStrategy
-from engine.strategies.atr_breakout import ATRBreakoutStrategy
+from engine.strategies.atr_breakout import ATRStopLossStrategy as ATRBreakoutStrategy
 from engine.strategies.bollinger_squeeze import BollingerSqueezeStrategy
 from engine.strategies.grid_trading import GridTradingStrategy
 from engine.strategies.regime_adaptive import RegimeAdaptiveStrategy
@@ -45,7 +46,7 @@ def generate_test_data(days=365):
 
 def test_ema_crossover():
     """Test EMA Crossover Strategy"""
-    print("🧪 Testing EMA Crossover Strategy...")
+    print("[TEST] Testing EMA Crossover Strategy...")
     df = generate_test_data(100)
     strategy = EMACrossoverStrategy()
     
@@ -62,7 +63,7 @@ def test_ema_crossover():
 
 def test_atr_breakout():
     """Test ATR Breakout Strategy"""
-    print("🧪 Testing ATR Breakout Strategy...")
+    print("[TEST] Testing ATR Breakout Strategy...")
     df = generate_test_data(100)
     strategy = ATRBreakoutStrategy()
     
@@ -78,7 +79,7 @@ def test_atr_breakout():
 
 def test_bollinger_squeeze():
     """Test Bollinger Bands Squeeze Strategy"""
-    print("🧪 Testing Bollinger Squeeze Strategy...")
+    print("[TEST] Testing Bollinger Squeeze Strategy...")
     df = generate_test_data(100)
     strategy = BollingerSqueezeStrategy()
     
@@ -94,7 +95,7 @@ def test_bollinger_squeeze():
 
 def test_grid_trading():
     """Test Grid Trading Strategy"""
-    print("🧪 Testing Grid Trading Strategy...")
+    print("[TEST] Testing Grid Trading Strategy...")
     strategy = GridTradingStrategy(grid_levels=5, spacing_pct=2.0)
     
     # Test với các mức giá khác nhau
@@ -107,7 +108,7 @@ def test_grid_trading():
 
 def test_regime_adaptive():
     """Test Regime Adaptive Strategy"""
-    print("🧪 Testing Regime Adaptive Strategy...")
+    print("[TEST] Testing Regime Adaptive Strategy...")
     df = generate_test_data(200)
     strategy = RegimeAdaptiveStrategy()
     
@@ -123,7 +124,7 @@ def test_regime_adaptive():
 
 def test_multi_strategy_ensemble():
     """Test Multi-Strategy Ensemble"""
-    print("🧪 Testing Multi-Strategy Ensemble...")
+    print("[TEST] Testing Multi-Strategy Ensemble...")
     df = generate_test_data(100)
     ensemble = MultiStrategyEnsemble()
     
@@ -135,7 +136,7 @@ def test_multi_strategy_ensemble():
     return result
 
 def main():
-    print("🚀 DEMO: Testing All Trading Strategies")
+    print("=== DEMO: Testing All Trading Strategies ===")
     print("=" * 50)
     
     # Test từng chiến lược
@@ -147,15 +148,15 @@ def main():
     test_multi_strategy_ensemble()
     
     print("\n" + "="*50)
-    print("✅ All strategies tested successfully!")
-    print("📊 Strategies tested:")
-    print("  • EMA Crossover (9/21)")
-    print("  • ATR Breakout (2.0x)")
-    print("  • Bollinger Squeeze")
-    print("  • Grid Trading")
-    print("  • Regime Adaptive")
-    print("  • Multi-Strategy Ensemble")
-    print("\n🎯 All strategies are ready for backtesting!")
+    print("[OK] All strategies tested successfully!")
+    print("[INFO] Strategies tested:")
+    print("  - EMA Crossover (9/21)")
+    print("  - ATR Breakout (2.0x)")
+    print("  - Bollinger Squeeze")
+    print("  - Grid Trading")
+    print("  - Regime Adaptive")
+    print("  - Multi-Strategy Ensemble")
+    print("\n[DONE] All strategies are ready for backtesting!")
 
 if __name__ == "__main__":
     main()

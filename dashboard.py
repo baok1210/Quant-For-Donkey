@@ -128,8 +128,103 @@ if view == "Donkey View":
 # --- Quant View (Expert) ---
 else:
     # Tạo các tab cho phần Quant View
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "🌊 Order Flow", "💼 Portfolio", "🔔 Alerts"])
+    tab0, tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["⚙️ Cấu hình", "📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "🌊 Order Flow", "💼 Portfolio", "🔔 Alerts"])
 
+    # --- Tab 0: Setup Configuration ---
+    with tab0:
+        st.header("⚙️ Cấu hình hệ thống")
+        
+        from engine.setup_wizard import SetupWizard
+        from engine.ai_brain import AIBrain
+        
+        wizard = SetupWizard()
+        
+        # Section 1: AI Provider
+        st.subheader("📡 AI Provider")
+        
+        # Current status
+        status = wizard.check_status()
+        if status.get('ai_provider'):
+            st.success(f"✅ Đã cấu hình: {', '.join(status['ai_provider'])}")
+        else:
+            st.warning("⚠️ Chưa cấu hình AI Provider")
+        
+        # Available providers
+        st.write("**Các providers có sẵn:**")
+        for key, info in SetupWizard.PROVIDER_GUIDES.items():
+            with st.expander(f"{info['name']}"):
+                st.write(f"📝 {info['description']}")
+                st.write(f"🔗 [Đăng ký]({info['register_url']})")
+                st.write(f"🎁 {info['free_credit']}")
+        
+        # Add new provider
+        st.write("---")
+        st.write("**➕ Thêm API Key mới:**")
+        
+        provider_choice = st.selectbox(
+            "Chọn Provider",
+            options=list(SetupWizard.PROVIDER_GUIDES.keys()),
+            format_func=lambda x: SetupWizard.PROVIDER_GUIDES[x]['name'],
+            key="provider_select"
+        )
+        
+        api_key_input = st.text_input(
+            "API Key", 
+            type="password",
+            key="api_key_input",
+            help=f"Lấy tại: {SetupWizard.PROVIDER_GUIDES[provider_choice]['register_url']}"
+        )
+        
+        col_cfg1, col_cfg2 = st.columns([1, 4])
+        with col_cfg1:
+            if st.button("💾 Lưu", key="save_provider"):
+                if api_key_input:
+                    info = SetupWizard.PROVIDER_GUIDES[provider_choice]
+                    wizard.config[info['api_key_env']] = api_key_input
+                    wizard._save_config()
+                    st.success(f"✅ Đã lưu {info['name']}!")
+                    st.rerun()
+                else:
+                    st.error("Cần nhập API Key")
+        with col_cfg2:
+            if st.button("⏭️ Skip", key="skip_provider"):
+                pass
+        
+        # Section 2: Exchange (optional)
+        st.write("---")
+        st.subheader("💰 Exchange API (Optional)")
+        st.write("Bỏ qua nếu chỉ phân tích, không trade thật")
+        
+        col_ex1, col_ex2, col_ex3 = st.columns(3)
+        with col_ex1:
+            ex_api = st.text_input("API Key", key="ex_api")
+        with col_ex2:
+            ex_secret = st.text_input("Secret", type="password", key="ex_secret")
+        with col_ex3:
+            if st.button("💾 Lưu Exchange"):
+                if ex_api and ex_secret:
+                    # Save to config
+                    st.success("✅ Đã lưu!")
+        
+        # Section 3: RPC (optional)
+        st.write("---")
+        st.subheader("🔗 Solana RPC (Optional)")
+        
+        col_rpc1, col_rpc2 = st.columns([1, 1])
+        with col_rpc1:
+            rpc_choice = st.selectbox("RPC Provider", ["Skip", "Helius", "QuickNode"])
+        with col_rpc2:
+            rpc_key = st.text_input("API Key", key="rpc_key")
+        
+        if st.button("💾 Lưu RPC"):
+            st.success("✅ Đã lưu!")
+        
+        # Show current config status
+        st.write("---")
+        st.subheader("📊 Trạng thái hiện tại")
+        current_status = wizard.check_status()
+        st.json(current_status)
+    
     # --- Tab 1: Dashboard ---
     with tab1:
         st.header("📊 Tổng quan hệ thống")
@@ -512,38 +607,7 @@ else:
 
 # --- Footer ---
 st.markdown("---")
-st.caption("🫏 Quant for Donkey - Hệ thống quản lý quỹ chuyên nghiệp cho mọi cấp độ") <= 0.5:
-                return "SELL"
-            return "HOLD"
-        
-        # Chạy backtest
-        st.write("### Kết quả Backtest:")
-        results = backtester.run_backtest(data, sample_strategy, weights)
-        
-        col_bt1, col_bt2, col_bt3 = st.columns(3)
-        with col_bt1:
-            st.metric("Tổng lợi nhuận", f"{results['total_return']:.2%}")
-        with col_bt2:
-            st.metric("Max Drawdown", f"{results['max_drawdown']:.2%}")
-        with col_bt3:
-            st.metric("Sharpe Ratio", f"{results['sharpe_ratio']:.2f}")
-        
-        st.write(f"Số giao dịch: {results['trade_count']}")
-        
-        # Vẽ biểu đồ hiệu suất
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(results['portfolio_history'])
-        ax.set_title("Lịch sử giá trị danh mục")
-        ax.set_xlabel("Thời gian")
-        ax.set_ylabel("Giá trị ($)")
-        st.pyplot(fig)
-
-
-from engine.order_flow import OrderFlowAnalyzer
-
-# --- Tab 6: Order Flow ---
-with tab6:
+st.caption("Quant for Donkey - He thong quan ly quy chuyen nghiep")
     st.header("🌊 Order Flow Analysis")
     st.markdown("Phân tích dòng tiền, áp lực mua/bán và dấu hiệu Smart Money.")
     

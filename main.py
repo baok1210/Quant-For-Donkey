@@ -14,6 +14,7 @@ from engine.risk import RiskEngine
 from engine.signals import SignalEngine
 from engine.monthly_planner import MonthlyPlanner
 from engine.ai_brain import AIBrain
+from engine.setup_wizard import SetupWizard
 from engine.data_aggregator import CryptoDataAggregator
 from engine.advanced_dca import AdvancedDCA
 from engine.session_risk import SessionRiskManager
@@ -25,6 +26,37 @@ from engine.backtest_walkforward import WalkForwardBacktester
 from engine.order_flow import OrderFlowAnalyzer
 from engine.forecaster import PriceForecaster
 from engine.alert_system import AlertSystem, AlertLevel
+from engine.learning_data import get_learning_manager, auto_record_daily, auto_record_decision, auto_record_result
+from engine.learning_loop import get_learning_loop
+from engine.fixed_learning import get_fixed_learning_manager
+from engine.logic_guard import get_logic_guard, check_before_run
+
+def check_first_run(interactive: bool = False):
+    """Check config status"""
+    wizard = SetupWizard()
+    status = wizard.check_status()
+    
+    # Show info but don't block
+    if interactive and not status.get('ai_provider'):
+        print("\n⚠️  AI Provider CHƯA được cấu hình!")
+        print("="*50)
+        
+        print("\n📋 Các AI Providers có sẵn:")
+        for key, info in SetupWizard.PROVIDER_GUIDES.items():
+            print(f"  • {info['name']}: {info['description']}")
+            print(f"    Miễn phí: {info['free_credit']}")
+            print(f"    Đăng ký: {info['register_url']}")
+        
+        # Try prompt for config only in interactive mode
+        try:
+            choice = input("\n👉 Cấu hình? [y/N]: ").strip().lower()
+            if choice == 'y':
+                wizard.run()
+        except:
+            pass
+    
+    return wizard.check_status()
+
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana - Phiên bản Chuyên nghiệp"""
@@ -53,6 +85,13 @@ class SolanaQuantFund:
         self.reflection = ReflectionEngine()
         self.offline_learner = OfflineLearner()
         self.ai_brain = AIBrain(provider=provider, model=model)
+        
+        # Logic Guard - Check system before running
+        self.logic_guard = get_logic_guard()
+        
+        # Learning capability check
+        can_run, msg = self.logic_guard.can_run_module('learning_loop', {})
+        self.can_learn = can_run
         
         # Professional Modules (v4.0.0)
         self.data_aggregator = CryptoDataAggregator()
@@ -145,6 +184,9 @@ class SolanaQuantFund:
         print(f"   Timing Score: {dca_timing['timing_score']:.2f}")
         for reason in dca_timing['reasons']:
             print(f"      ✓ {reason}")
+        
+        # === GHI LẠI QUYẾT ĐỊNH ĐỂ HỌC (sau khi có AI recommendation) ===
+        # Sẽ được ghi sau Bước 5
             
         # 4. Quản lý Rủi ro Phiên giao dịch (Session Risk)
         print("\n🛡️  Bước 4: Session Risk Management")
@@ -204,10 +246,27 @@ class SolanaQuantFund:
             )
             print("   ✓ Quyết định đã được lưu")
             
-            # Update session risk
+# Update session risk
             self.session_risk.record_trade_result(0)  # Ghi nhận trade mới
             
-        return {
+            # === ALWAYS GHI LẠI QUYẾT ĐỊNH ĐỂ HỌC (even HOLD decisions) ===
+            action = "BUY" if final_amount > 0 else "HOLD"
+            amount = final_amount
+            
+            auto_record_decision(
+                price=current_price,
+                action=action,
+                amount=amount,
+                reason={
+                    "ensemble": strategy_signal,
+                    "dca_score": dca_timing.get("timing_score", 0),
+                    "ai_recommendation": ai_analysis.get("recommendation", "HOLD")
+                },
+                confidence=ensemble_result.get("confidence", 0),
+                ai_rec=ai_analysis.get("recommendation")
+            )
+            
+            return {
             "timestamp": datetime.now().isoformat(),
             "funding_data": funding,
             "oi_data": oi,
@@ -221,6 +280,9 @@ class SolanaQuantFund:
 if __name__ == "__main__":
     import pandas as pd
     import numpy as np
+    
+    # Check config status (non-blocking)
+    check_first_run(interactive=False)
     
     # Tạo mock data để test
     print("Khởi tạo hệ thống Quant Fund...")

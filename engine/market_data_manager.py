@@ -5,7 +5,7 @@ Tích hợp: Price Stream, On-chain Data, Sentiment, Macro Indicators
 import asyncio
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
-from engine.price_stream import SolanaPriceStream, PriceAggregator
+from engine.price_stream import BinanceWebSocket, PriceAggregator
 from engine.onchain import OnChainAnalyzer
 from engine.sentiment import SentimentAnalyzer
 from engine.macro import MacroAnalyzer

@@ -1,0 +1,17 @@
+{
+  "decisions": [
+    {
+      "timestamp": "2026-01-01",
+      "price_in": 100,
+      "price_out": 110,
+      "decision": "BUY",
+      "outcome": "PROFIT",
+      "pnl_pct": 10.0,
+      "indicators": {
+        "rsi": 25
+      },
+      "has_outcome": true
+    }
+  ],
+  "outcomes": []
+}

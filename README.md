@@ -1,6 +1,6 @@
 # 🫏 Quant for Donkey
 
-> **Hệ thống Quản lý Quỹ AI Quant chuyên nghiệp dành cho những chú Lừa kiên trì — Tích hợp Order Flow, 6 chiến lược "thực chiến", tự học và Dashboard 2 chế độ.**
+> **Hệ thống Quản lý Quỹ AI Quant chuyên nghiệp với Tư duy Tự hiệu chỉnh (Self-Correction Loop)** — Tích hợp Order Flow, Learning với Outcomes, và Dashboard 2 chế độ.**
 
 <p align="center">
   <img src="logo_qfd.jpg" width="200" alt="QFD Logo">
@@ -8,87 +8,101 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/GUI-Streamlit-red)
-![Version](https://img.shields.io/badge/Version-4.3.5-brightgreen)
+![Version](https://img.shields.io/badge/Version-4.4.0-brightgreen)
 ![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen)
-
----
-
-## 📊 Performance Targets (Donkey Proof)
-
-| Metric | Current | Target |
-|--------|---------|--------|
-| **Profit Factor** | 1.72 | > 1.5 |
-| **Sharpe Ratio** | 3.65 | > 1.5 |
-| **Win Rate** | 45% - 87% | > 45% |
-| **Max Drawdown** | 4.2% | < 15% |
-| **Execution** | Realistic | Slippage & Spread |
 
 ---
 
 ## 🎯 Tổng quan
 
-**Quant for Donkey (QFD)** là một cỗ máy giao dịch định lượng toàn diện, được thiết kế để phục vụ cả hai đối tượng:
-1. **Donkey (Người mới)**: Cần quyết định MUA/GIỮ đơn giản, xác suất thắng cao.
-2. **Quant (Chuyên gia)**: Cần dữ liệu Order Flow, Funding, Liquidations và Portfolio Management chuyên sâu.
+**Quant for Donkey (QFD)** là hệ thống giao dịch định lượng với khả năng **tự học từ quá khứ** và **tự sửa lỗi logic**:
+
+1. **Tự tạo Outcomes**: Chạy backtest trên dữ liệu lịch sử → tạo decisions với kết quả thực tế
+2. **Tự học**: Phân tích patterns từ các quyết định có lãi/lỗ → tối ưu parameters
+3. **Tự kiểm tra**: LogicGuard đảm bảo mọi module có dữ liệu đúng trước khi chạy
+4. **Tự cải thiện**: Sau mỗi trade → cập nhật outcome → học thêm
 
 ---
 
-## ✨ Tính năng "Khủng" (v4.3.5)
+## ✨ Tính năng v4.4.0
 
-### 🌓 Dashboard 2 Chế độ (Donkey vs Quant)
-- **🫏 Donkey View**: Chỉ hiển thị thông tin tối giản - **NÊN MUA HAY KHÔNG?**, xác suất thắng, lợi nhuận kỳ vọng. Cực kỳ dễ hiểu.
-- **📊 Quant View**: 8 tab phân tích chuyên sâu với đầy đủ thông số kỹ thuật, mô hình ML và dữ liệu dòng tiền.
+### 🧠 Self-Correction Loop (NEW!)
+| Module | Chức năng |
+|--------|----------|
+| **LogicGuard** | Kiểm tra logic trước khi chạy - không cho phép "phỏng đoán" |
+| **BacktestEngine** | Tạo dữ liệu học với OUTCOMES từ OHLCV |
+| **LearningLoop** | Học từ decisions có outcome → tối ưu RSI thresholds |
+| **FixedLearning** | Lưu decisions SAU KHI có kết quả |
 
-### 🌊 Order Flow & Smart Money (NEW!)
-- **CVD (Cumulative Volume Delta)**: Theo dõi áp lực mua/bán tích lũy trên từng mức giá.
-- **Absorption Detection**: Phát hiện các vùng hấp thụ của Smart Money.
-- **Delta Divergence**: Cảnh báo khi giá và dòng tiền mâu thuẫn.
+### 🤖 Multi-Provider AI Brain
+| Provider | Models | API Key Env |
+|----------|--------|-------------|
+| **OpenRouter** (Recommended) | 300+ models | `OPENROUTER_API_KEY` |
+| **OpenAI** | GPT-5.4, GPT-4o | `OPENAI_API_KEY` |
+| **Claude** | Sonnet 4.6, Opus 4.6 | `ANTHROPIC_API_KEY` |
+| **Google** | Gemini 2.5 Pro/Flash | `GEMINI_API_KEY` |
+| **DeepSeek** | DeepSeek R1 (Free!) | `DEEPSEEK_API_KEY` |
+| **Custom** | Your own LLM | `CUSTOM_API_KEY` |
 
-### 🤖 AI XGBoost Auto-Retraining
-- **Drift Detection**: Tự động phát hiện khi mô hình dự báo bị "lệch" so với thực tế.
-- **Auto-Retrain**: Tự động huấn luyện lại model mỗi tuần hoặc khi sai số vượt ngưỡng.
-- **Model Versioning**: Lưu trữ và cho phép rollback các phiên bản model.
+### 🌊 Order Flow & Smart Money
+- **CVD**: Cumulative Volume Delta
+- **Absorption Detection**: Vùng hấp thụ của whales
+- **Delta Divergence**: Giá và volume mâu thuẫn
 
-### 💼 Portfolio Rebalancing
-- **Dynamic Rebalancing**: Tự động tính toán lệnh cân bằng lại tỷ trọng khi lệch > 5%.
-- **Portfolio Rotation**: Tự động chuyển đổi tài sản dựa trên Market Regime (Bull/Bear).
-- **Tax-loss Harvesting**: Gợi ý chốt lỗ thông minh để tối ưu hóa thuế.
+### 📊 6 Chiến lược
+| Chiến lược | Đặc điểm |
+|----------|----------|
+| EMA Crossover 9/21 | Bắt trend sớm |
+| ATR Breakout 2.0x | Stop loss thông minh |
+| Bollinger Squeeze | Chờ bùng nổ |
+| Grid Trading | Thu hoạch biến động |
+| Regime Adaptive | Đổi bài theo thị trường |
+| Multi-Strategy Ensemble | Vote đa số |
 
-### 🔔 Real-time Alerts
-- **Telegram & Discord**: Nhận thông báo tức thời về cơ hội DCA, tín hiệu Order Flow, hoặc khi hệ thống tự động retrain model.
+### 🔗 Integrations (v4.4.0)
+| Module | Nguồn |
+|--------|-------|
+| **VectorBT** | High-performance backtesting |
+| **Freqtrade** | Hyperopt, Edge, Strategy framework |
+| **Hummingbot** | Market Making, DEX connectors |
+| **vn.py** | Vietnam market data (HOSE/HNX) |
 
 ---
 
-## 📈 6 Chiến lược Chủ chốt
-
-| Chiến lược | Đặc điểm | Phù hợp với |
-|----------|--------|----------|
-| **EMA Crossover 9/21** | Bắt trend sớm | Bull Market |
-| **ATR Breakout 2.0x** | Chặn lỗ thông minh | Volatile Market |
-| **Bollinger Bands Squeeze** | Chờ đợi bùng nổ | Consolidation |
-| **Grid Trading** | Thu hoạch biến động | Sideways Market |
-| **Regime Adaptive** | Tự động đổi bài | Toàn bộ thị trường |
-| **Multi-Strategy Ensemble** | Bỏ phiếu đa số | Sự an toàn tuyệt đối |
-
----
-
-## 🏗️ Kiến trúc QFD Engine
+## 🏗️ Kiến trúc Self-Correcting
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                     Donkey Discovery Layer (TradingView)             │
-│  Auto-Discovery → Pine Converter → Backtest → Rank & Select         │
-└──────────────────────────────────────────────────────────────────────┘
-                               ↓
-┌──────────────────────────────────────────────────────────────────────┐
-│                        Data Collection Layer                          │
-│  Order Flow (CVD) │ Funding Rate │ Liquidations │ Real-time Price     │
-└──────────────────────────────────────────────────────────────────────┘
-                               ↓
-┌──────────────────────────────────────────────────────────────────────┐
-│                    Intelligence & Decision Engine                     │
-│  XGBoost Forecast (Auto-Retrain) │ Veto Mechanism │ AI Brain (LLM)   │
-└──────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                  LogicGuard (Kiểm tra)                 │
+│  - Verify: Module cần Outcome?                      │
+│  - Block nếu thiếu dữ liệu                        │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              BacktestEngine → Outcomes               │
+│  - OHLCV → Simulate trades → PROFIT/LOSS          │
+│  - Save to memory/learning_base.json              │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              LearningLoop → Rules                   │
+│  - Analyze: RSI ranges for PROFIT vs LOSS         │
+│  - Optimize: RSI thresholds                       │
+│  - Output: Learned rules                          │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              Real-time Decision                      │
+│  - Input: Current RSI, Price                     │
+│  - Check: Learned thresholds                     │
+│  - Output: BUY/SELL/HOLD                          │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              Update & Re-learn                      │
+│  - Record actual outcome                         │
+│  - Periodic: Re-run LearningLoop                 │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -96,56 +110,75 @@
 ## 🚀 Cài đặt
 
 ```bash
-# Clone repo
+# Clone
 git clone https://github.com/baok1210/Quant-For-Donkey.git
 cd Quant-For-Donkey
 
-# Tạo virtual environment & cài dependencies
+# Virtual environment
 python -m venv venv
-source venv/bin/activate # Linux/Mac
+venv\Scripts\activate  # Windows
+
+# Install
 pip install -r requirements.txt
 
-# Cài đặt API keys trong .env
+# Config
 cp .env.example .env
+# Thêm API keys (OpenRouter khuyến nghị)
 ```
 
 ---
 
-## 📁 Cấu trúc thư mục mới
+## 📁 Cấu trúc modules
 
-- `main.py`: Chạy phân tích hàng ngày (CLI).
-- `dashboard.py`: Giao diện Dashboard 2 chế độ (Streamlit).
-- `engine/order_flow.py`: Phân tích CVD & Hấp thụ.
-- `engine/forecaster.py`: Dự báo giá với cơ chế Auto-Retrain.
-- `engine/portfolio_manager.py`: Quản lý danh mục & Rebalancing.
-- `engine/alert_system.py`: Cảnh báo Telegram/Discord.
-- `engine/strategies/`: Bộ 6 chiến lược cốt lõi.
+```
+engine/
+├── ai_brain.py          # Multi-provider AI
+├── logic_guard.py        # Self-correction guard
+├── backtest_engine.py    # Tạo outcomes
+├── learning_loop.py     # Học từ outcomes
+├── fixed_learning.py    # Lưu decisions
+├── forecaster.py        # XGBoost prediction
+├── order_flow.py        # Smart money
+├── strategies/          # 6 chiến lược
+└── integrations/       # VectorBT, Freqtrade, Hummingbot, vn.py
+```
 
 ---
 
-## 📊 Lịch sử phát triển (Chuyên nghiệp)
+## 📊 Module Status
 
-- **v4.3.5**: Tích hợp QFD Logo và hoàn thiện UI Dashboard 2 chế độ.
-- **v4.3.4**: Chia Dashboard thành **Donkey View** (Simple) và **Quant View** (Expert).
-- **v4.3.3**: Tích hợp **Real-time Alert System** (Telegram/Discord).
-- **v4.3.2**: Triển khai **Portfolio Rebalancing** và **Dynamic Rotation**.
-- **v4.3.1**: Nâng cấp **XGBoost với Auto-Retraining** và **Order Flow Analysis**.
-- **v4.3.0**: Sửa lỗi Sharpe logic, Liquidation zones thực tế và thêm **Veto Mechanism**.
+| Module | Needs Outcome | Status |
+|--------|-------------|--------|
+| Forecaster | ❌ | ✅ Predict |
+| Order Flow | ❌ | ✅ Analysis |
+| Multi Strategy | ❌ | ✅ Vote |
+| **Learning Loop** | ✅ | ✅ Creates & Uses |
+| **LogicGuard** | ✅ | ✅ Verifies |
+
+---
+
+## 📄 Chạy hệ thống
+
+```bash
+# CLI
+python main.py
+
+# Dashboard
+streamlit run dashboard.py
+
+# Test modules
+python test_modules.py
+
+# Audit system
+python -c "from engine.logic_guard import audit_system; print(audit_system())"
+```
 
 ---
 
 ## ⚠️ Disclaimer
 
-Đây là công cụ hỗ trợ quyết định, **không phải lời khuyên đầu tư**. Hãy giao dịch có trách nhiệm.
+Đây là công cụ hỗ trợ quyết định, **không phải lời khuyên đầu tư**.
 
 ---
 
-## 📄 License
-
-MIT License
-
----
-
-**Được xây dựng bởi ❤️ bởi OpenClaw AI cho Quant for Donkey**
-
-*Version 4.3.5 | 2026-04-13 | 40+ Modules | Production Ready*
+**Version 4.4.0 | 2026-04-14 | Self-Correction Loop Enabled**

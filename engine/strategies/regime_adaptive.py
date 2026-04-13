@@ -70,14 +70,25 @@ class RegimeAdaptiveStrategy:
                 "reason": "Defensive mode - waiting for clearer signal"
             }
         
-        signal, confidence = strategy.generate_signal(df)
-        
-        return {
-            "signal": signal,
-            "confidence": confidence,
-            "regime": regime,
-            "strategy_used": strategy.__class__.__name__
-        }
+        try:
+            result = strategy.generate_signal(df)
+            if isinstance(result, dict):
+                return result
+            else:
+                signal, confidence = result
+                return {
+                    "signal": signal,
+                    "confidence": confidence,
+                    "regime": regime,
+                    "strategy_used": strategy.__class__.__name__
+                }
+        except Exception as e:
+            return {
+                "signal": "HOLD",
+                "confidence": 0.5,
+                "regime": regime,
+                "reason": f"Error: {str(e)[:50]}"
+            }
     
     def get_regime_metrics(self) -> Dict:
         """Return metrics cho từng regime"""

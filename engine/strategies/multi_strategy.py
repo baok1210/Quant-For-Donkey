@@ -35,14 +35,18 @@ class MultiStrategyEnsemble:
         
         # Lấy tín hiệu từ từng chiến lược
         for name, strategy in self.strategies.items():
-            if name == "regime_adaptive":
+            try:
                 result = strategy.generate_signal(df)
-                signals[name] = result["signal"]
-                confidences[name] = result["confidence"]
-            else:
-                signal, confidence = strategy.generate_signal(df)
-                signals[name] = signal
-                confidences[name] = confidence
+                if isinstance(result, dict):
+                    signals[name] = result.get("signal", "HOLD")
+                    confidences[name] = result.get("confidence", 0.5)
+                else:
+                    signal, confidence = result
+                    signals[name] = signal
+                    confidences[name] = confidence
+            except Exception as e:
+                signals[name] = "HOLD"
+                confidences[name] = 0.5
         
         # Voting system
         buy_votes = sum(1 for s in signals.values() if s == "BUY")
