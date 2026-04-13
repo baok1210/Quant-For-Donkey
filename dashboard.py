@@ -26,6 +26,10 @@ st.set_page_config(
 )
 
 # --- Header ---
+try:
+    st.image("logo_qfd.jpg", width=80)
+except:
+    st.markdown("## 🫏")
 st.title("🫏 Quant for Donkey Dashboard")
 st.markdown("""
 *Hệ thống Quản lý Quỹ AI Quant chuyên nghiệp — Tích hợp Order Flow, 6 chiến lược, và tự học*
