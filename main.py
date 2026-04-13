@@ -24,6 +24,7 @@ from engine.deliberation import DeliberationLayer
 from engine.backtest_walkforward import WalkForwardBacktester
 from engine.order_flow import OrderFlowAnalyzer
 from engine.forecaster import PriceForecaster
+from engine.alert_system import AlertSystem, AlertLevel
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana - Phiên bản Chuyên nghiệp"""
@@ -60,11 +61,8 @@ class SolanaQuantFund:
         self.strategy_ensemble = MultiStrategyEnsemble()
         self.forecaster = PriceForecaster()  # Auto-retraining XGBoost
         
-        # Legacy/Support Modules
-        self.agents = MultiAgentSystem()
-        self.risk = RiskEngine(self.capital)
-        self.signals = SignalEngine()
-        self.monthly_planner = MonthlyPlanner()
+        # Alert System (optional)
+        self.alert_system = AlertSystem()  # Cần cấu hình token/webhook
         
         self.dca_history = []
         self.performance_log = []
