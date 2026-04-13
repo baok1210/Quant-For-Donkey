@@ -1,12 +1,13 @@
 """
 Crypto Data Aggregator - Thu thập dữ liệu Edge cho Professional Traders
-Funding Rate, Open Interest, Liquidations, Correlation
+Funding Rate, Open Interest, Liquidations, Correlation, Order Flow
 """
 import requests
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Dict, List, Optional
+from .order_flow import OrderFlowAnalyzer
 
 class CryptoDataAggregator:
     """Tổng hợp dữ liệu từ Binance Futures, Coinglass và các nguồn chuyên nghiệp"""
@@ -14,6 +15,7 @@ class CryptoDataAggregator:
     def __init__(self):
         self.binance_fapi = "https://fapi.binance.com/fapi/v1"
         self.binance_data_api = "https://fapi.binance.com/futures/data"
+        self.order_flow = OrderFlowAnalyzer()
         
     def get_funding_rate(self, symbol: str = "SOLUSDT") -> Dict:
         """Lấy Funding Rate thực tế (8h/lần)"""
@@ -244,4 +246,52 @@ class CryptoDataAggregator:
             "positive_ratio": positive_count / len(history),
             "negative_ratio": negative_count / len(history),
             "pattern": "CYCLICAL" if abs(avg_funding) < std_funding * 0.5 else "BIASED"
+        }
+
+    def get_order_flow_analysis(self, symbol: str = "SOLUSDT", price_data: List[float] = None) -> Dict:
+        """
+        Phân tích Order Flow từ orderbook
+        Bao gồm: CVD, Absorption zones, Delta divergence, Smart money signals
+        """
+        try:
+            analysis = self.order_flow.analyze_smart_money(symbol, price_data)
+            return {
+                **analysis,
+                "fallback_mode": False,
+                "warning": None
+            }
+        except Exception as e:
+            print(f"⚠️ WARNING: Order Flow Analysis failed ({e})")
+            return {
+                "timestamp": datetime.now().isoformat(),
+                "symbol": symbol,
+                "fallback_mode": True,
+                "warning": f"Order Flow API failed: {e}",
+                "smart_money_indicators": {
+                    "high_buy_pressure": False,
+                    "high_sell_pressure": False,
+                    "buy_absorption_zones": False,
+                    "divergence_signal": "NEUTRAL"
+                }
+            }
+
+    def get_comprehensive_market_data(self, symbol: str = "SOLUSDT", 
+                                     current_price: float = None,
+                                     price_history: List[float] = None) -> Dict:
+        """
+        Lấy toàn bộ dữ liệu thị trường cho phân tích chuyên nghiệp
+        """
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "symbol": symbol,
+            "funding": self.get_funding_rate(symbol),
+            "open_interest": self.get_open_interest(symbol),
+            "liquidations": self.get_liquidations(symbol),
+            "liquidation_zones": self.get_liquidation_zones(symbol, current_price),
+            "funding_cycles": self.detect_funding_cycles(symbol),
+            "order_flow": self.get_order_flow_analysis(symbol, price_history),
+            "correlation": self.calculate_correlation(
+                price_history or [100] * 24,
+                price_history or [100] * 24
+            )
         }

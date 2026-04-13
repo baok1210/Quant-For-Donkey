@@ -22,9 +22,9 @@ st.set_page_config(
 )
 
 # --- Header ---
-st.title("🏛️ Solana Quant Fund AI Dashboard")
+st.title("🫏 Quant for Donkey Dashboard")
 st.markdown("""
-*Hệ thống đầu tư định lượng trên Solana với khả năng tự học*
+*Hệ thống Quản lý Quỹ AI Quant chuyên nghiệp — Tích hợp Order Flow, 6 chiến lược, và tự học*
 """)
 
 # --- Real-time Price Display ---
@@ -50,7 +50,7 @@ st.sidebar.markdown("Cấu hình hệ thống")
 
 # --- Main Content ---
 # Tạo các tab
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "⚙️ Cấu hình"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["📈 Dashboard", "📝 Nhật ký", "🤖 Tác vụ", "📊 Phân tích", "📊 Offline Learning", "🌊 Order Flow", "⚙️ Cấu hình"])
 
 # --- Tab 5: Offline Learning ---
 with tab5:
@@ -122,6 +122,75 @@ with tab5:
         ax.set_xlabel("Thời gian")
         ax.set_ylabel("Giá trị ($)")
         st.pyplot(fig)
+
+
+from engine.order_flow import OrderFlowAnalyzer
+
+# --- Tab 6: Order Flow ---
+with tab6:
+    st.header("🌊 Order Flow Analysis")
+    st.markdown("Phân tích dòng tiền, áp lực mua/bán và dấu hiệu Smart Money.")
+    
+    order_flow = OrderFlowAnalyzer()
+    
+    # Lấy dữ liệu Order Flow
+    price_data = [100.0, 101.5, 102.3, 101.8, 103.2, 104.5, 103.8] 
+    
+    with st.spinner("Đang phân tích Order Flow..."):
+        of_data = order_flow.analyze_smart_money("SOLUSDT", price_data)
+        
+        if "error" in of_data:
+            st.error(of_data["error"])
+        else:
+            # Hiển thị metrics chính
+            col_of1, col_of2, col_of3 = st.columns(3)
+            
+            cvd_result = of_data["cvd_analysis"]
+            delta_div = of_data["delta_divergence"]
+            
+            with col_of1:
+                st.metric("Total CVD", f"{cvd_result['total_cvd']:.2f}")
+            with col_of2:
+                st.metric("Delta Divergence", f"{delta_div['divergence']}", 
+                          delta=f"Conf: {delta_div['confidence']:.1f}%")
+            with col_of3:
+                st.metric("Absorption Zones", f"{len(of_data['absorption_zones'])}")
+            
+            # Hiển thị Smart Money Indicators
+            st.write("### 🧠 Smart Money Indicators:")
+            sm_inds = of_data["smart_money_indicators"]
+            
+            col_sm1, col_sm2 = st.columns(2)
+            with col_sm1:
+                if sm_inds["high_buy_pressure"]:
+                    st.success("🔥 High Buy Pressure Detected")
+                if sm_inds["high_sell_pressure"]:
+                    st.error("📉 High Sell Pressure Detected")
+            
+            with col_sm2:
+                if sm_inds["buy_absorption_zones"]:
+                    st.info("🛡️ Buy Absorption Zones Found")
+                if sm_inds["divergence_signal"] == "BULLISH":
+                    st.success("🚀 Bullish Divergence Signal")
+                elif sm_inds["divergence_signal"] == "BEARISH":
+                    st.warning("⚠️ Bearish Divergence Signal")
+            
+            # Hiển thị Absorption Zones
+            if of_data["absorption_zones"]:
+                st.write("### 🛡️ Absorption Zones Detailed:")
+                for zone in of_data["absorption_zones"]:
+                    st.write(f"- **{zone['zone_type']}**: Price ${zone['start_price']:.2f} - ${zone['end_price']:.2f} (Max CVD: {zone['max_cvd']:.2f})")
+            
+            # Biểu đồ CVD Levels
+            st.write("### 📊 CVD Levels:")
+            df_cvd = pd.DataFrame(cvd_result["levels"])
+            
+            import plotly.express as px
+            fig_cvd = px.bar(df_cvd, x="price", y="cumulative_cvd", 
+                            title="Cumulative Volume Delta by Price Level",
+                            color="cumulative_cvd",
+                            color_continuous_scale="RdYlGn")
+            st.plotly_chart(fig_cvd, use_container_width=True)
 
 
 from engine.monthly_planner import MonthlyPlanner

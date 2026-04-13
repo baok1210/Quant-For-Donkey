@@ -22,11 +22,15 @@ from engine.strategies.multi_strategy import MultiStrategyEnsemble
 from engine.offline_learner import OfflineLearner
 from engine.deliberation import DeliberationLayer
 from engine.backtest_walkforward import WalkForwardBacktester
+from engine.order_flow import OrderFlowAnalyzer
+from engine.forecaster import PriceForecaster
 
 class SolanaQuantFund:
     """Hệ thống quản lý quỹ đầu tư Solana - Phiên bản Chuyên nghiệp"""
     
     def __init__(self, initial_capital: float = 10000, ai_provider=None, ai_model=None):
+        # ... (rest of code)
+        self.order_flow = OrderFlowAnalyzer()
         # Ưu tiên load từ file cấu hình của người dùng lưu từ GUI
         user_config = {}
         if os.path.exists("config_settings.json"):
@@ -54,6 +58,7 @@ class SolanaQuantFund:
         self.advanced_dca = AdvancedDCA()
         self.session_risk = SessionRiskManager()
         self.strategy_ensemble = MultiStrategyEnsemble()
+        self.forecaster = PriceForecaster()  # Auto-retraining XGBoost
         
         # Legacy/Support Modules
         self.agents = MultiAgentSystem()
@@ -83,10 +88,20 @@ class SolanaQuantFund:
         funding = self.data_aggregator.get_funding_rate("SOLUSDT")
         oi = self.data_aggregator.get_open_interest("SOLUSDT")
         liquidations = self.data_aggregator.get_liquidations("SOL")
+        order_flow = self.data_aggregator.get_order_flow_analysis("SOLUSDT", df_history['close'].tolist() if df_history is not None else None)
         
         print(f"   Funding Rate: {funding['funding_rate_pct']:.4f}% ({funding['sentiment']})")
         print(f"   Long/Short Ratio: {oi['long_short_ratio']:.2f}")
         print(f"   Liquidations (24h): ${liquidations['liquidations_24h']:,.0f}")
+        
+        # Hiển thị thông tin Order Flow
+        if order_flow.get("smart_money_indicators"):
+            sm = order_flow["smart_money_indicators"]
+            print(f"   Order Flow Signals:")
+            print(f"      Buy Pressure: {'✅ HIGH' if sm['high_buy_pressure'] else '-low'}")
+            print(f"      Sell Pressure: {'✅ HIGH' if sm['high_sell_pressure'] else 'low'}")
+            print(f"      Absorption Zones: {'✅ YES' if sm['buy_absorption_zones'] else 'no'}")
+            print(f"      Divergence: {sm['divergence_signal']}")
         
         # 2. Phân tích Chiến lược (Ensemble)
         print("\n🧠 Bước 2: Phân tích Chiến lược (Multi-Strategy Ensemble)")
@@ -99,8 +114,25 @@ class SolanaQuantFund:
             strategy_signal = "HOLD"
             print("   Không có dữ liệu lịch sử cho chiến lược (HOLD)")
         
-        # 3. Phân tích Timing DCA chuyên nghiệp
-        print("\n⏱️  Bước 3: Advanced DCA Timing")
+        # 3. Dự báo giá (XGBoost Auto-Retraining)
+        print("\n预测 Bước 3: Price Forecasting (Auto-Retraining)")
+        forecast_result = self.forecaster.train_and_predict(df_history) if df_history is not None else {"status": "NO_DATA"}
+        
+        if forecast_result.get("status") == "OK":
+            predicted_price = forecast_result["predicted_price"]
+            expected_change = forecast_result["expected_change_pct"]
+            model_version = forecast_result["model_version"]
+            needs_retrain = forecast_result["needs_retrain"]
+            
+            print(f"   Dự báo: ${predicted_price:.2f} (Thay đổi: {expected_change:.2f}%)")
+            print(f"   Model: v{model_version} | Retrain: {'✅' if needs_retrain else '✅Up-to-date'}")
+        else:
+            predicted_price = current_price
+            expected_change = 0
+            print("   Không thể dự báo (dữ liệu không đủ)")
+        
+        # 4. Phân tích Timing DCA chuyên nghiệp
+        print("\n⏱️  Bước 4: Advanced DCA Timing")
         current_price = df_history['close'].iloc[-1] if df_history is not None else 150.0
         dca_timing = self.advanced_dca.calculate_optimal_dca_time(
             current_price=current_price,
@@ -149,7 +181,14 @@ class SolanaQuantFund:
             "funding_rate": funding['funding_rate_pct'],
             "long_short_ratio": oi['long_short_ratio'],
             "strategy_signal": strategy_signal,
-            "dca_timing_score": dca_timing['timing_score']
+            "dca_timing_score": dca_timing['timing_score'],
+            "order_flow": order_flow.get("smart_money_indicators", {}),
+            "absorption_zones": len(order_flow.get("absorption_zones", [])),
+            "delta_divergence": order_flow.get("delta_divergence", {}).get("divergence", "NEUTRAL"),
+            "forecast_price": predicted_price,
+            "forecast_change_pct": expected_change,
+            "forecast_model_version": model_version,
+            "forecast_needs_retrain": needs_retrain
         }, diary_content)
         
         print(f"   Khuyến nghị AI: {ai_analysis.get('recommendation', 'N/A')}")
@@ -163,7 +202,7 @@ class SolanaQuantFund:
                 reason=f"AI: {ai_analysis.get('recommendation')} | Timing: {dca_timing['timing_score']:.2f}",
                 amount=f"${final_amount:.2f}",
                 risk_assessment=f"Passed Session Risk, Kelly Size: {kelly_size:.2%}",
-                data_sources="Funding Rate, L/S Ratio, XGBoost, 6 Strategies"
+                data_sources="Funding Rate, L/S Ratio, XGBoost, 6 Strategies, Order Flow Analysis"
             )
             print("   ✓ Quyết định đã được lưu")
             
