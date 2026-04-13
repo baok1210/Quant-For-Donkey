@@ -1,0 +1,11 @@
+# Optional / advanced — not required for the main app flow.
+# Install: pip install -r requirements-extra.txt
+# Note: ta-lib may need a prebuilt wheel on some Windows setups.
+
+-r requirements.txt
+ta>=0.11.0
+ta-lib>=0.4.28
+tweepy>=4.14.0
+praw>=7.7.1
+solders>=0.20.0
+scipy>=1.11.0
